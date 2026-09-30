@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: voxer
+      POSTGRES_PASSWORD: voxer
+      POSTGRES_DB: voxer
+    ports:
+      - "5432:5432"
+    volumes:
+      - voxer_pg:/var/lib/postgresql/data
+
+volumes:
+  voxer_pg:

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Launch theme: the color must be the site's dark theme `surface`. -->
+    <style name="Theme.Voxer.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/voxer_surface_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_voxer_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.Voxer</item>
+    </style>
+
+    <style name="Theme.Voxer" parent="Theme.AppCompat.NoActionBar">
+        <!-- Second source of the white flash: the window background under the WebView. -->
+        <item name="android:windowBackground">@color/voxer_surface_dark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+    </style>
+</resources>

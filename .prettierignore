@@ -1,0 +1,17 @@
+.next
+node_modules
+coverage
+dist
+build
+*.min.js
+package-lock.json
+public
+.env
+.env.*
+
+# Proyecto Android: lo formatea ktlint/Android Studio, no Prettier.
+android/
+
+# Tokens de tema generados por scripts/generateThemesCss.ts
+app/globals.css
+

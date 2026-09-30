@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "voxer-realtime",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+  // Browsers can use a custom domain (add `"routes": [{ "pattern": "realtime.example.com", "custom_domain": true }]`),
+  // but the server should emit through workers.dev: a custom domain goes through the zone's security
+  // rules, and a challenge to the server's IPs drops every emit at the edge without any error.
+  "workers_dev": true,
+  "preview_urls": false,
+  "durable_objects": {
+    "bindings": [{ "name": "ROOM", "class_name": "RoomDurableObject" }],
+  },
+  // The free plan only supports SQLite-backed Durable Objects.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomDurableObject"] }],
+}

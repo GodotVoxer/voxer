@@ -1,0 +1,35 @@
+[versions]
+# AGP 9.4 requires Gradle >= 9.6, Build Tools 36 and JDK >= 17.
+# AGP 9 has built-in Kotlin (android.builtInKotlin=true by default): do not apply
+# org.jetbrains.kotlin.android, which AGP explicitly rejects.
+agp = "9.4.1"
+googleServices = "4.5.0"
+coreKtx = "1.19.0"
+appcompat = "1.8.0"
+activity = "1.13.0"
+splashscreen = "1.2.0"
+webkit = "1.17.0"
+browser = "1.10.0"
+swiperefreshlayout = "1.2.0"
+firebaseBom = "34.19.0"
+junit = "4.13.2"
+unifiedpushConnector = "3.3.5"
+json = "20260814"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activity" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
+androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+unifiedpush-connector = { group = "org.unifiedpush.android", name = "connector", version.ref = "unifiedpushConnector" }
+json = { group = "org.json", name = "json", version.ref = "json" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

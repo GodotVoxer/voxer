@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same mark as the favicon; the splash theme sets the background, not this file. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M42.96,36.65 L46.19,43.85 L52.69,59.38 L68.72,59.38 L65.18,66.70 L55.65,66.70 L43.90,66.63 L36.21,49.84 L29.89,36.78 Z M66.76,36.71 L79.89,36.71 L73.46,49.71 L60.51,49.91 Z M44.85,68.90 L64.12,68.90 L61.96,73.45 L60.95,75.60 L47.89,75.60 Z M59.50,52.11 L72.19,52.11 L71.75,53.25 L69.85,56.91 L57.29,56.98 Z"
+        android:fillColor="@color/voxer_icon_mark" />
+</vector>

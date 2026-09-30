@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  allowBackup is already false. Defense in depth: if someone re-enables it, the WebView session
+  cookie must not be uploaded to the cloud or restored on another phone.
+-->
+<full-backup-content>
+    <exclude domain="file" path="app_webview/" />
+    <exclude domain="sharedpref" path="voxer_push.xml" />
+</full-backup-content>

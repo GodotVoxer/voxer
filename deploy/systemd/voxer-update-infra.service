@@ -1,0 +1,10 @@
+[Unit]
+Description=Update Voxer infrastructure images
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+# Ajustá la carpeta donde está docker-compose.yml y el usuario dueño.
+User=voxer
+ExecStart=/srv/voxer/update-infra.sh

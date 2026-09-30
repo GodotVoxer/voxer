@@ -1,0 +1,538 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MediaType {
+  IMAGE
+  UPLOADED_VIDEO
+  YOUTUBE
+}
+
+enum AvatarVariant {
+  BLUE
+  GREEN
+  RED
+  YELLOW
+  PINK
+  BROWN
+  MULTICOLOR
+  MULTICOLOR_INVERTED
+  WHITE
+  BLACK
+}
+
+enum NotificationType {
+  REPLY_TO_COMMENT
+  COMMENT_ON_YOUR_VOX
+  COMMENT_ON_FOLLOWED_VOX
+}
+
+enum PushPlatform {
+  ANDROID
+  IOS
+  WEB
+  UNIFIED_PUSH
+}
+
+enum UserRole {
+  USER
+  MOD
+  ADMIN
+}
+
+enum ReportReason {
+  WRONG_CATEGORY
+  NSFW_OUT_OF_CATEGORY
+  GORE
+  SPAM
+  ILLEGAL_CONTENT
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  DISMISSED
+  ACTIONED
+}
+
+enum ModerationActionType {
+  BAN_USER
+  DELETE_VOX
+  DELETE_COMMENT
+  RECATEGORIZE_VOX
+  BULK_SOFT_DELETE_USER_CONTENT
+  PIN_VOX
+  UNPIN_VOX
+  EDIT_VOX
+  EDIT_COMMENT
+}
+
+enum CommentStaffBadge {
+  MOD
+  ADMIN
+}
+
+enum ThemeMode {
+  DARK
+  LIGHT
+  SYSTEM
+  CUSTOM
+}
+
+enum ThemeBase {
+  DARK
+  LIGHT
+}
+
+model User {
+  id               String         @id @default(cuid())
+  username         String         @unique
+  passwordHash     String
+  /** Legado: IP en claro de cuentas previas; `npm run db:backfill-registration-ip-hash` la reemplaza por el hash. */
+  registrationIp   String?
+  /** HMAC-SHA256 de la IP de registro (sin IP en claro). */
+  registrationIpHash String?      @db.VarChar(64)
+  role             UserRole       @default(USER)
+  /** Se incrementa en logout para invalidar JWTs de sesión emitidos antes. */
+  sessionVersion   Int            @default(0)
+  createdAt        DateTime       @default(now())
+  lastVoxAt        DateTime?
+  lastCommentAt    DateTime?
+  /** Inicio de ventana para límite de subidas de multimedia (ver `VOX_CREATE_INTERVAL_MS`). */
+  mediaUploadWindowStartAt DateTime?
+  mediaUploadCountInWindow   Int        @default(0)
+  /** Ventana laxa para adjuntos en comentarios (ver `COMMENT_MEDIA_UPLOAD_WINDOW_MS`). */
+  commentMediaUploadWindowStartAt DateTime?
+  commentMediaUploadCountInWindow   Int        @default(0)
+  themeMode        ThemeMode      @default(DARK)
+  /** null = nunca eligió tema con sesión: al iniciar sesión se sube la preferencia del dispositivo. */
+  themeUpdatedAt   DateTime?
+  /** Tema personalizado activo cuando `themeMode = CUSTOM`; queda null si se borra. */
+  activeCustomThemeId String?
+  /** Versión de `COMMUNITY_RULES_VERSION` que aceptó; null = nunca aceptó (cuentas previas a las reglas). */
+  rulesAcceptedVersion Int?
+  rulesAcceptedAt      DateTime?
+  activeCustomTheme   UserTheme?  @relation("ActiveUserTheme", fields: [activeCustomThemeId], references: [id], onDelete: SetNull)
+  customThemes        UserTheme[] @relation("UserThemeOwner")
+  themeAssets         UserThemeAsset[]
+  voxOwned         Vox[]          @relation("VoxOwner")
+  comments         Comment[]
+  voxFollows       VoxFollow[]
+  voxHides         VoxHide[]
+  voxFavorites     VoxFavorite[]
+  notifications    Notification[]
+  bansGiven        UserBan[]      @relation("BanModerator")
+  bansReceived     UserBan[]      @relation("BanTarget")
+  bansRevoked      UserBan[]      @relation("BanRevokedBy")
+  clientIpBansGiven   ClientIpBan[] @relation("ClientIpBanModerator")
+  clientIpBansRevoked ClientIpBan[] @relation("ClientIpBanRevokedBy")
+  reportsSubmitted Report[]       @relation("ReportReporter")
+  moderationActions ModerationAction[] @relation("ModerationActor")
+  moderationUndos  ModerationAction[] @relation("ModerationUndoneBy")
+  staffNotifications StaffNotification[]
+  pushDevices        PushDevice[]
+  voxDeletedAsModerator Vox[]     @relation("VoxDeletedBy")
+  commentsDeletedAsModerator Comment[] @relation("CommentDeletedBy")
+  pollVotes                VoxPollVote[]
+  voxThreadIdentities      VoxThreadIdentity[]
+
+  @@index([registrationIpHash])
+}
+
+model Vox {
+  id             String    @id @default(cuid())
+  title          String    @db.VarChar(200)
+  description    String
+  author         String
+  category       String
+  mediaType      MediaType
+  mediaUrl       String?
+  thumbnailUrl   String?
+  youtubeVideoId String?
+  /** `mediaUrl` es un GIF convertido a MP4: se reproduce en bucle, sin controles ni sonido. */
+  animatedImage  Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastActivityAt DateTime  @default(now())
+  ownerId        String?
+  owner          User?     @relation("VoxOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  deletedAt      DateTime?
+  deletedByUserId String?
+  deletedBy      User?     @relation("VoxDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  /** ID corto por comentarista en el hilo (categoría Política o >>idunico). */
+  threadUniqueIdsEnabled Boolean   @default(false)
+  /** Banderas por país en comentarios (Lugares e idiomas o >>banderitas). */
+  countryFlagsEnabled    Boolean   @default(false)
+  /** Denormalizado para grilla; true si hay encuesta activa. */
+  hasPoll                Boolean   @default(false)
+  /** Staff admin: orden fijo al inicio del listado principal; null = no pineado. */
+  pinnedAt               DateTime?
+  /** Huella HMAC-SHA256 de la IP al crear (sin IP en claro). */
+  clientIpHash           String?   @db.VarChar(64)
+  comments       Comment[]
+  poll           VoxPoll?
+  threadIdentities VoxThreadIdentity[]
+  followers      VoxFollow[]
+  hiddenBy       VoxHide[]
+  favoritedBy    VoxFavorite[]
+  notifications  Notification[]
+  reports        Report[]
+
+  @@index([createdAt])
+  @@index([category])
+  @@index([lastActivityAt])
+  @@index([pinnedAt])
+  @@index([ownerId])
+  @@index([deletedAt])
+  @@index([clientIpHash, createdAt])
+}
+
+model Comment {
+  id            String        @id @default(cuid())
+  publicTag     String        @unique @db.VarChar(8)
+  voxId         String
+  vox           Vox           @relation(fields: [voxId], references: [id], onDelete: Cascade)
+  body          String
+  displayName   String
+  imageUrl      String?
+  videoUrl      String?
+  /** Fotograma para video nativo (carga diferida en cliente). */
+  videoPosterUrl String?
+  /** `videoUrl` es un GIF convertido a MP4: se reproduce en bucle, sin controles ni sonido. */
+  animatedImage Boolean       @default(false)
+  avatarVariant AvatarVariant
+  /** Si el autor es staff y eligió identificarse al publicar. */
+  staffBadge    CommentStaffBadge?
+  /** El autor es el dueño del vox pero eligió no mostrarse como OP en este comentario. */
+  hideOpBadge   Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  authorId      String?
+  author          User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  deletedAt     DateTime?
+  deletedByUserId String?
+  deletedBy     User?         @relation("CommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  /** Opción de encuesta mostrada en el badge del comentario (debe coincidir con voto del usuario). */
+  pollDisclosureOptionId String?
+  pollDisclosureOption   VoxPollOption? @relation("CommentPollDisclosure", fields: [pollDisclosureOptionId], references: [id], onDelete: SetNull)
+  /** ISO 3166-1 alpha-2; sin guardar IP. */
+  countryCode            String?        @db.Char(2)
+  /** Copia al publicar del tag de hilo único (misma fuente que `VoxThreadIdentity`; evita join al listar). */
+  threadTag              String?        @db.VarChar(3)
+  threadBadgeHue         Int?
+  /** Huella HMAC-SHA256 de la IP al crear (sin IP en claro). */
+  clientIpHash           String?        @db.VarChar(64)
+  /** El autor silenció las notificaciones de respuestas (>>TAG) a este comentario. */
+  replyNotificationsMuted Boolean       @default(false)
+  /** El dueño del vox lo fijó; los fijados se duplican arriba del hilo, el último fijado primero. */
+  pinnedAt               DateTime?
+  notificationsAsRelated Notification[] @relation("NotificationRelatedComment")
+  reports       Report[]
+
+  @@index([voxId, deletedAt, createdAt, id])
+  @@index([voxId, pinnedAt])
+  @@index([voxId, publicTag])
+  @@index([authorId])
+  /// Own comment history: filters by author and live rows, ordered by (createdAt, id).
+  @@index([authorId, deletedAt, createdAt, id])
+  @@index([deletedAt])
+  @@index([pollDisclosureOptionId])
+  @@index([clientIpHash, createdAt])
+}
+
+model VoxPoll {
+  id      String          @id @default(cuid())
+  voxId   String          @unique
+  vox     Vox             @relation(fields: [voxId], references: [id], onDelete: Cascade)
+  options VoxPollOption[]
+  votes   VoxPollVote[]
+}
+
+model VoxPollOption {
+  id                 String        @id @default(cuid())
+  pollId             String
+  poll               VoxPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  sortOrder          Int
+  label              String        @db.VarChar(80)
+  votes              VoxPollVote[]
+  commentsDisclosing Comment[]     @relation("CommentPollDisclosure")
+
+  @@unique([pollId, sortOrder])
+  @@index([pollId])
+}
+
+model VoxPollVote {
+  id       String        @id @default(cuid())
+  userId   String
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pollId   String
+  poll     VoxPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId String
+  option   VoxPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pollId])
+  @@index([pollId])
+}
+
+model VoxThreadIdentity {
+  id       String @id @default(cuid())
+  voxId    String
+  vox      Vox    @relation(fields: [voxId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tag      String @db.VarChar(3)
+  badgeHue Int
+
+  @@unique([voxId, authorId])
+  @@unique([voxId, tag])
+  @@index([voxId])
+}
+
+model VoxFollow {
+  userId String
+  voxId  String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vox    Vox  @relation(fields: [voxId], references: [id], onDelete: Cascade)
+
+  @@id([userId, voxId])
+  @@index([voxId])
+}
+
+model VoxHide {
+  userId String
+  voxId  String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vox    Vox  @relation(fields: [voxId], references: [id], onDelete: Cascade)
+
+  @@id([userId, voxId])
+  @@index([userId])
+}
+
+model VoxFavorite {
+  userId String
+  voxId  String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vox    Vox  @relation(fields: [voxId], references: [id], onDelete: Cascade)
+
+  @@id([userId, voxId])
+  @@index([userId])
+  @@index([voxId])
+}
+
+model Notification {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type               NotificationType
+  voxId              String
+  vox                Vox              @relation(fields: [voxId], references: [id], onDelete: Cascade)
+  actorUserId        String?
+  relatedCommentId   String?
+  relatedComment     Comment?         @relation("NotificationRelatedComment", fields: [relatedCommentId], references: [id], onDelete: SetNull)
+  message            String
+  thumbnailUrl       String?
+  readAt             DateTime?
+  createdAt          DateTime         @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@index([userId, createdAt])
+}
+
+model UserBan {
+  id                String    @id @default(cuid())
+  targetUserId      String
+  targetUser        User      @relation("BanTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  moderatorUserId   String
+  moderator         User      @relation("BanModerator", fields: [moderatorUserId], references: [id], onDelete: Restrict)
+  reason            String
+  createdAt         DateTime  @default(now())
+  endsAt            DateTime?
+  revokedAt         DateTime?
+  revokedByUserId   String?
+  revokedBy         User?     @relation("BanRevokedBy", fields: [revokedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([targetUserId, revokedAt, endsAt])
+  @@index([moderatorUserId])
+}
+
+/** Bloqueo por huella de IP (HMAC); nunca almacena la IP en claro. */
+model ClientIpBan {
+  id                String    @id @default(cuid())
+  ipHash            String    @db.VarChar(64)
+  moderatorUserId   String
+  moderator         User      @relation("ClientIpBanModerator", fields: [moderatorUserId], references: [id], onDelete: Restrict)
+  reason            String
+  createdAt         DateTime  @default(now())
+  endsAt            DateTime?
+  revokedAt         DateTime?
+  revokedByUserId   String?
+  revokedBy         User?     @relation("ClientIpBanRevokedBy", fields: [revokedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([ipHash, revokedAt, endsAt])
+  @@index([moderatorUserId])
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  reporterUserId String
+  reporter       User         @relation("ReportReporter", fields: [reporterUserId], references: [id], onDelete: Cascade)
+  voxId          String
+  vox            Vox          @relation(fields: [voxId], references: [id], onDelete: Cascade)
+  commentId      String?
+  comment        Comment?     @relation(fields: [commentId], references: [id], onDelete: SetNull)
+  reason         ReportReason
+  details        String?
+  status         ReportStatus @default(OPEN)
+  createdAt      DateTime     @default(now())
+  /** `v:${voxId}` o `c:${commentId}` — dedupe por usuario + motivo (por IP solo rate limit). */
+  reportDedupeKey String      @db.VarChar(200)
+  /** HMAC-SHA256 de la IP del denunciante (mismo esquema que vox/comentarios/bans). */
+  reporterIpHash  String       @db.VarChar(64)
+  staffNotifications StaffNotification[]
+
+  @@unique([reporterUserId, reportDedupeKey, reason])
+  @@index([voxId])
+  @@index([createdAt])
+}
+
+model StaffNotification {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportId      String
+  report        Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  message       String
+  voxId         String
+  thumbnailUrl  String?
+  commentHash   String?
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@index([userId, createdAt])
+}
+
+/** Token FCM de una instalación. Identifica al dispositivo, no al usuario: si otra cuenta inicia
+ * sesión en el mismo teléfono, el upsert por `token` reasigna la fila en vez de duplicarla. */
+model PushDevice {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String       @unique @db.VarChar(512)
+  platform     PushPlatform @default(ANDROID)
+  /** `versionName` del build; solo diagnóstico y para apagar push a versiones rotas. */
+  appVersion   String?      @db.VarChar(32)
+  createdAt    DateTime     @default(now())
+  /** Se renueva en cada registro; base de la purga de tokens abandonados. */
+  lastSeenAt   DateTime     @default(now())
+  /** Fallos consecutivos de FCM que no son `UNREGISTERED` (p. ej. `UNAVAILABLE`). */
+  failureCount Int          @default(0)
+  /** Solo `WEB`: claves de la suscripción Web Push (`token` guarda el endpoint). */
+  webP256dh    String?      @db.VarChar(128)
+  webAuth      String?      @db.VarChar(64)
+
+  @@index([userId])
+  @@index([lastSeenAt])
+}
+
+model ModerationAction {
+  id             String               @id @default(cuid())
+  actorUserId    String
+  actor          User                 @relation("ModerationActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  actionType     ModerationActionType
+  payload        Json
+  /** Si `actionType` es BAN_USER, coincide con `UserBan.id` para búsqueda en panel. */
+  relatedBanId   String?
+  createdAt      DateTime             @default(now())
+  undoneAt       DateTime?
+  undoneByUserId String?
+  undoneBy       User?                @relation("ModerationUndoneBy", fields: [undoneByUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId, createdAt])
+  @@index([createdAt])
+  @@index([relatedBanId])
+}
+
+enum StoredMediaKind {
+  IMAGE
+  UPLOADED_VIDEO
+  /** GIF animado guardado como MP4: se sube como imagen y se reproduce en bucle como imagen. */
+  ANIMATION
+}
+
+/** Objeto R2 reservado en POST /api/upload/blob-token; solo ese usuario puede POST finalize para ese pathname. */
+model BlobPendingPutFinalize {
+  pathname  String   @id
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/** Dedupe de multimedia por SHA-256 del archivo guardado (bytes finales en Blob o en disco). */
+model StoredMediaByHash {
+  id             String          @id @default(cuid())
+  sha256Hex      String          @unique @db.VarChar(64)
+  kind           StoredMediaKind
+  mediaUrl       String
+  thumbnailUrl   String
+  byteSize       Int
+  mimeType       String?         @db.VarChar(120)
+  blockedAt      DateTime?
+  createdAt      DateTime        @default(now())
+  /** Última subida o dedupe que devolvió este archivo; la limpieza respeta una ventana de gracia. */
+  lastUsedAt     DateTime        @default(now())
+
+  @@index([blockedAt])
+  @@index([lastUsedAt])
+}
+
+/** Tema personalizado: base incluida + overrides de color validados (solo hex) + fondo de vox estructurado. Nunca CSS libre. */
+model UserTheme {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation("UserThemeOwner", fields: [userId], references: [id], onDelete: Cascade)
+  name          String    @db.VarChar(40)
+  base          ThemeBase
+  schemaVersion Int       @default(1)
+  overrides     Json
+  headerBackground Json   @default("{\"kind\":\"none\"}")
+  voxBackground Json
+  /** Concurrencia optimista: cada edición debe traer la versión que leyó. */
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  activeFor     User[]    @relation("ActiveUserTheme")
+  /** FK real de `voxBackground.assetId` (propiedad verificada en servidor); queda null si se borra la imagen. */
+  backgroundAssetId String?
+  backgroundAsset   UserThemeAsset? @relation(fields: [backgroundAssetId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([backgroundAssetId])
+}
+
+/** Imagen de fondo de vox subida por el usuario: re-encodada a WebP, clave aleatoria bajo `theme-bg/`, solo la ve su dueño. */
+model UserThemeAsset {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  objectKey   String      @unique
+  objectKeySm String      @unique
+  /** Token opaco opcional para exportar/importar la imagen entre cuentas sin exponer ids ni URLs internas. */
+  shareId     String?     @unique @db.VarChar(32)
+  /** Suma de ambas variantes (cuenta para la cuota). */
+  byteSize    Int
+  width       Int
+  height      Int
+  sha256Hex   String      @db.VarChar(64)
+  createdAt   DateTime    @default(now())
+  themes      UserTheme[]
+
+  @@index([userId])
+  @@index([userId, sha256Hex])
+}

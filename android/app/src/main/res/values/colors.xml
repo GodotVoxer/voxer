@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pinned by lib/theme/nativeSplashColor.test.ts: derived from `surface`, `fg`, `fg-muted`, `on-solid`
+  and `brand-600` in lib/theme/builtinThemes.ts. If the theme changes, that test fails and this file
+  must be updated.
+-->
+<resources>
+    <color name="voxer_surface_dark">#030712</color>
+    <color name="voxer_surface_light">#f3f4f6</color>
+    <color name="voxer_brand">#0084d1</color>
+    <color name="voxer_on_surface_dark">#ffffff</color>
+    <color name="voxer_on_surface_muted_dark">#99a1af</color>
+    <color name="voxer_on_solid">#ffffff</color>
+    <!-- Icon background and mark: the web favicon's (app/icon.svg), not theme tokens. -->
+    <color name="voxer_icon_background">#0d1d32</color>
+    <color name="voxer_icon_mark">#96acb7</color>
+</resources>

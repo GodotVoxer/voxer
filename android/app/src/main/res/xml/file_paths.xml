@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Temporary camera captures. -->
+    <cache-path name="camera" path="camera/" />
+    <!-- Local copies of picked files (see PickedFileStore). -->
+    <cache-path name="picked" path="picked/" />
+</paths>

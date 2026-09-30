@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Status bar icon: Android paints it as a silhouette from the alpha channel only, so it is
+  monochrome and has no background. Same favicon mark on a 24 viewBox.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M8.46,6.43 L9.49,8.74 L11.58,13.73 L16.73,13.73 L15.59,16.08 L12.53,16.08 L8.76,16.06 L6.29,10.67 L4.26,6.47 Z M16.1,6.45 L20.32,6.45 L18.25,10.63 L14.09,10.69 Z M9.06,16.79 L15.25,16.79 L14.56,18.25 L14.23,18.94 L10.04,18.94 Z M13.77,11.4 L17.84,11.4 L17.7,11.76 L17.09,12.94 L13.06,12.96 Z"
+        android:fillColor="#ffffff" />
+</vector>

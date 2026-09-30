@@ -1,0 +1,80 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+/test-results/
+/playwright-report/
+# local visual baseline (depends on OS/fonts; regenerate with npm run test:visual:update)
+/e2e/__screenshots__/
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# local uploads (keep .gitkeep)
+/public/uploads/**
+!/public/uploads/.gitkeep
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# private ops / migration scripts (untracked; see scripts/README.md)
+scripts/private/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Android (native app in android/)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/app/**/google-services*.json
+*.jks
+*.keystore
+
+# Realtime Worker (Cloudflare)
+realtime/node_modules/
+realtime/.wrangler/
+
+# APKs exported for manual installs
+*.apk
+*.aab
+
+# private assistant context
+CLAUDE.local.md
+.claude/settings.local.json
+
+# server-side deploy secrets and dumps
+deploy/app.env
+deploy/backup.env
+deploy/backups/

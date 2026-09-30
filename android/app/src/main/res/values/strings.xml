@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Voxer</string>
+
+    <string name="channel_comments_name">Comentarios en vox</string>
+    <string name="channel_comments_description">Comentarios en tus vox y en los que seguís</string>
+    <string name="channel_replies_name">Respuestas</string>
+    <string name="channel_replies_description">Respuestas a tus comentarios</string>
+    <string name="channel_reports_name">Denuncias</string>
+    <string name="channel_reports_description">Denuncias pendientes de revisión (staff)</string>
+    <string name="notification_new_count">%d nuevos</string>
+
+    <string name="file_chooser_title">Elegí un archivo</string>
+    <string name="file_chooser_preparing">Preparando el archivo…</string>
+
+    <string name="error_offline_title">No hay conexión</string>
+    <string name="error_offline_body">Revisá tu internet y volvé a intentar.</string>
+    <string name="error_server_title">No pudimos cargar Voxer</string>
+    <string name="error_server_body">El servidor no respondió. Probá de nuevo en un rato.</string>
+    <string name="error_retry">Reintentar</string>
+
+    <string name="webview_outdated_title">Actualizá Android System WebView</string>
+    <string name="webview_outdated_body">Voxer necesita una versión más nueva para mostrar bien los colores.</string>
+    <string name="webview_outdated_action">Abrir en Play Store</string>
+
+    <string name="download_started">Descargando…</string>
+    <string name="download_failed">No se pudo descargar el archivo.</string>
+    <string name="image_saved">Imagen guardada en Descargas.</string>
+    <string name="action_save_image">Guardar imagen</string>
+    <string name="action_save_video">Guardar video</string>
+    <string name="action_copy_link">Copiar enlace</string>
+    <string name="action_open_browser">Abrir en el navegador</string>
+    <string name="action_share">Compartir</string>
+    <string name="link_copied">Enlace copiado.</string>
+</resources>

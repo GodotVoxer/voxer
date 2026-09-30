@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0b1120" />
+    <title>Voxer · En mantenimiento</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: oklch(13% 0.028 261.692);
+        --card: oklch(20.8% 0.042 265.755);
+        --fg: #fff;
+        --muted: oklch(70.7% 0.022 261.325);
+        --brand: oklch(74.6% 0.16 232.661);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px 16px;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.5 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      main {
+        width: 100%;
+        max-width: 420px;
+        padding: 32px 24px;
+        border-radius: 16px;
+        background: var(--card);
+        text-align: center;
+      }
+      img {
+        width: 96px;
+        height: 96px;
+        border-radius: 20px;
+      }
+      h1 {
+        margin: 20px 0 8px;
+        font-size: 1.4rem;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 8px;
+        border-radius: 50%;
+        background: var(--brand);
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+      .status {
+        margin-top: 24px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.25;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .dot {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/__maintenance/logo.png" alt="Voxer" />
+      <h1>Estamos en mantenimiento</h1>
+      <p>Volvemos en unos minutos.</p>
+      <p class="status"><span class="dot"></span>La página se recarga sola cuando volvamos.</p>
+    </main>
+    <script>
+      // Polls the site's health and reloads as soon as maintenance ends.
+      setInterval(async () => {
+        try {
+          const r = await fetch("/api/health", { cache: "no-store" });
+          if (r.ok) location.reload();
+        } catch {}
+      }, 15000);
+    </script>
+  </body>
+</html>

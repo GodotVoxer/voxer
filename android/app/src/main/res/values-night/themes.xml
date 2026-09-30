@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The site decides the actual theme (localStorage `voxer.theme.v1`), not the system mode. This file
+  only exists so night mode does not reinterpret Theme.AppCompat; colors stay the same and
+  MainActivity paints the last known `surface`.
+-->
+<resources>
+    <style name="Theme.Voxer" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/voxer_surface_dark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

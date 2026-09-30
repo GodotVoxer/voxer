@@ -1,0 +1,138 @@
+# Single-server production stack. See deploy/README.md.
+# `.env` holds Compose interpolation values (database password, image, tunnel token) that the app
+# never sees; the app reads `app.env`.
+
+name: voxer
+
+x-app: &app
+  image: ${VOXER_IMAGE:?set VOXER_IMAGE in .env}
+  restart: unless-stopped
+  env_file: app.env
+  environment:
+    DATABASE_URL: postgresql://voxer:${POSTGRES_PASSWORD}@postgres:5432/voxer
+    TRUSTED_PROXY: ${TRUSTED_PROXY:-cloudflare}
+    PG_POOL_MAX: "5"
+    # Rate limits against the local Redis through its Upstash-compatible REST API.
+    UPSTASH_REDIS_REST_URL: http://srh:80
+    UPSTASH_REDIS_REST_TOKEN: ${SRH_TOKEN}
+    NODE_OPTIONS: --max-old-space-size=448
+  depends_on:
+    postgres:
+      condition: service_healthy
+    srh:
+      condition: service_started
+  mem_limit: 700m
+  networks: [internal]
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: voxer
+      POSTGRES_DB: voxer
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    # Sized for a 2 GB host shared with two app copies.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=40
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voxer -d voxer"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 450m
+    shm_size: 128m
+    networks: [internal]
+
+  # Only rate limit counters: no persistence, a restart resets them harmlessly.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      [
+        "redis-server",
+        "--save",
+        "",
+        "--appendonly",
+        "no",
+        "--maxmemory",
+        "48mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+      ]
+    mem_limit: 80m
+    networks: [internal]
+
+  # Serves the Upstash REST API on top of Redis, so `@upstash/ratelimit` works unchanged.
+  srh:
+    image: hiett/serverless-redis-http:latest
+    restart: unless-stopped
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: ${SRH_TOKEN:?set SRH_TOKEN in .env}
+      SRH_CONNECTION_STRING: redis://redis:6379
+    depends_on: [redis]
+    mem_limit: 200m
+    networks: [internal]
+
+  # Two copies behind Caddy: deploys replace them one at a time, so the site never goes down.
+  app-blue:
+    <<: *app
+
+  app-green:
+    <<: *app
+
+  # One-off `prisma migrate deploy`, run by deploy.sh before replacing the app.
+  migrate:
+    image: ${VOXER_MIGRATE_IMAGE:-none}
+    profiles: [tools]
+    environment:
+      DATABASE_URL: postgresql://voxer:${POSTGRES_PASSWORD}@postgres:5432/voxer
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./maintenance:/srv/maintenance:ro
+    # Without the tunnel, publish Caddy to a reverse proxy on the host that terminates TLS.
+    ports:
+      - ${HTTP_BIND:-127.0.0.1:8080}:80
+    depends_on: [app-blue, app-green]
+    mem_limit: 100m
+    networks: [internal]
+
+  # Cloudflare Tunnel: traffic enters only through Cloudflare and no web port is exposed.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles: [tunnel]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on: [caddy]
+    mem_limit: 100m
+    networks: [internal]
+
+volumes:
+  pgdata:
+
+networks:
+  internal:

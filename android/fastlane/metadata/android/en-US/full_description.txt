@@ -1,0 +1,15 @@
+<p>Voxer is an anonymous, image-board style forum. You post a <b>vox</b> (a thread with a title, an image, video, GIF or YouTube link and, optionally, a poll) and people reply in real time. The interface is in Spanish.</p>
+
+<p><b>Anonymous by design:</b> nobody sees who posted a vox or a comment. Your IP is never shown or stored in plain text, and notifications never carry comment text.</p>
+
+<ul>
+<li>A grid of vox with categories, pinned threads, search and live updates.</li>
+<li>Real-time comments with quotes (<i>&gt;&gt;TAG</i>), comments pinned by the thread author, per-thread IDs and optional country flags.</li>
+<li>Images, videos and GIFs, stripped of metadata on the server.</li>
+<li>Notifications for replies and followed threads.</li>
+<li>Dark, light or system theme, plus custom themes with a live editor.</li>
+</ul>
+
+<p><b>Notifications:</b> this build uses no Google services. To get notifications while the app is closed, install a <a href="https://unifiedpush.org">UnifiedPush</a> distributor such as ntfy.</p>
+
+<p>The app shows the <i>voxer.pro</i> site and adds what a browser cannot: notifications, the file and camera picker, links that open straight in the app and an offline screen.</p>

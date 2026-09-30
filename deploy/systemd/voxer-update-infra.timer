@@ -1,0 +1,9 @@
+[Unit]
+Description=Monthly update of Voxer infrastructure images
+
+[Timer]
+OnCalendar=*-*-03 07:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

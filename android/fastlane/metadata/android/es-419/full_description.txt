@@ -1,0 +1,15 @@
+<p>Voxer es un foro anónimo al estilo de los imageboards. Publicás un <b>vox</b> (un tema con título, una imagen, video, GIF o link de YouTube y, si querés, una encuesta) y la gente responde en tiempo real.</p>
+
+<p><b>Anónimo por diseño:</b> nadie ve quién publicó un vox o un comentario. Tu IP nunca se muestra ni se guarda en claro, y las notificaciones no llevan el texto de los comentarios.</p>
+
+<ul>
+<li>Grilla de vox con categorías, fijados, búsqueda y novedades en vivo.</li>
+<li>Comentarios en tiempo real con citas (<i>&gt;&gt;TAG</i>), comentarios fijados por el autor del vox, IDs por hilo y banderas de país opcionales.</li>
+<li>Imágenes, videos y GIFs; los archivos se limpian de metadatos en el servidor.</li>
+<li>Notificaciones de respuestas y de vox que seguís.</li>
+<li>Tema oscuro, claro o del sistema, y temas personalizados con editor en vivo.</li>
+</ul>
+
+<p><b>Notificaciones:</b> esta versión no usa servicios de Google. Para recibir notificaciones con la app cerrada instalá un distribuidor de <a href="https://unifiedpush.org">UnifiedPush</a>, como ntfy.</p>
+
+<p>La app muestra el sitio <i>voxer.pro</i> y agrega lo que un navegador no da: notificaciones, selector de archivos y cámara, links que abren directo en la app y pantalla sin conexión.</p>

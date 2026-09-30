@@ -1,0 +1,2 @@
+- New package name: pro.voxer.app. This is a new install; you can uninstall the previous version.
+- Notifications through UnifiedPush in the build without Google services.

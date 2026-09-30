@@ -1,0 +1,10 @@
+[Unit]
+Description=Voxer database backup
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+# Ajustá la carpeta donde está docker-compose.yml y el usuario dueño.
+User=voxer
+ExecStart=/srv/voxer/backup.sh

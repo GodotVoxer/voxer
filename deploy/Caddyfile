@@ -1,0 +1,54 @@
+{
+	admin off
+	auto_https off
+}
+
+# Plain HTTP behind the TLS terminator (Cloudflare Tunnel or a reverse proxy on the host).
+:80 {
+	# Maintenance mode while /srv/maintenance/ON exists (`touch maintenance/ON`); checked on every request.
+	@maintenance file {
+		root /srv/maintenance
+		try_files /ON
+	}
+	handle @maintenance {
+		header Cache-Control "no-store"
+		header Retry-After "300"
+		handle /__maintenance/logo.png {
+			root * /srv/maintenance
+			uri strip_prefix /__maintenance
+			file_server
+		}
+		handle /api/* {
+			header Content-Type "application/json; charset=utf-8"
+			respond `{"error":"Voxer está en mantenimiento. Volvemos en unos minutos."}` 503
+		}
+		handle {
+			error 503
+		}
+	}
+
+	handle {
+		reverse_proxy app-blue:3000 app-green:3000 {
+			lb_policy round_robin
+			# During a deploy one copy is down: retry on the other instead of answering 502.
+			lb_try_duration 15s
+			lb_try_interval 250ms
+			fail_duration 10s
+			health_uri /api/health
+			health_interval 5s
+			health_timeout 3s
+
+			# The API derives the allowed origin from these headers; this hop is http, but users arrived over https.
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Host {host}
+		}
+	}
+
+	# Maintenance page with a 503, also when no app copy answers.
+	handle_errors 502 503 504 {
+		header Cache-Control "no-store"
+		root * /srv/maintenance
+		rewrite * /index.html
+		file_server
+	}
+}

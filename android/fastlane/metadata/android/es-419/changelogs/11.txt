@@ -1,0 +1,2 @@
+- Nuevo nombre de paquete: pro.voxer.app. Es una instalación nueva; podés desinstalar la versión anterior.
+- Notificaciones por UnifiedPush en la versión sin servicios de Google.

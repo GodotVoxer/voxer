@@ -1,0 +1,3 @@
+# Copialo a .dev.vars para `wrangler dev`. Tiene que coincidir con SOCKET_BROADCAST_SECRET y AUTH_SECRET de la app.
+SOCKET_BROADCAST_SECRET=local-test-broadcast-secret-at-least-32-chars
+AUTH_SECRET=local-test-auth-secret-at-least-32-characters
