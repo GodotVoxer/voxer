@@ -8,7 +8,7 @@ Guidance for coding assistants working on this repository. Read [docs/architectu
 - **Layers.** `lib/` is isomorphic, `server/` is server-only, `features/` and `hooks/` are client code, `components/` is UI, `app/` holds routes. ESLint enforces the allowed imports; do not work around it.
 - **Language.** UI text, user-facing API errors and documentation (README, `docs/`, other Markdown, config examples) are Spanish (rioplatense, voseo). Code, identifiers, code comments and tests are English.
 - **Colors** come only from theme tokens (`docs/theming.md`); `tests/policy/themeTokenUsage.test.ts` has no exceptions.
-- **Comments** only for a non-obvious _why_, in one to three lines. No history, no narration.
+- **Comments** only for a non-obvious _why_, in one to three lines. No history, no narration, no restating the request or what the code already says.
 
 ## Commands
 
@@ -27,6 +27,7 @@ Android: `cd android && ./gradlew :app:testDebugUnitTest :app:assembleDebug`.
 
 - Keep changes scoped to the request. Give dialogs, forms and sizeable blocks their own component file instead of growing pages or views.
 - Pure logic goes next to a `*.test.ts`. Behavior changes need tests; run `npm run validate` before finishing.
+- Reuse before writing: look for an existing helper or hook (breakpoints in `features/device/`, `hooks/device/`) and extract a shared one instead of duplicating logic.
 - Imports use `@/`, no barrel files. The browser calls the API only through `features/http/apiClient.ts` and `features/*/api.ts`.
 - Route handlers validate, delegate to `server/`, and answer with `server/http/apiErrors.ts`.
 - New realtime events go in `lib/realtime/rooms.ts` (shared with the Worker). New browser origins go in `lib/http/contentSecurityPolicy.ts` and its test. New signed-in write endpoints get a rate limit in `server/http/userActionRateLimit.ts`.
