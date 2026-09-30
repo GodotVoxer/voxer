@@ -21,6 +21,7 @@ import { applyCommentPinnedToList, pinnedCommentsNewestFirst } from "@/features/
 import { collectCommentGalleryItems } from "@/features/comments/galleryItems";
 import type { CommentThreadHandle } from "@/features/comments/threadHandle";
 import type { CommentComposerHandle } from "@/components/Comments/Composer/CommentComposer";
+import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 import { VoxDetailSkeleton } from "@/components/Vox/Detail/VoxDetailSkeleton";
 import { VoxDetailLoadError } from "./VoxDetailLoadError";
 import { VoxDetailSidebar } from "./VoxDetailSidebar";
@@ -240,8 +241,8 @@ export const VoxDetailView = ({
       setVox,
     });
 
-  const onReplyInsertTag = useCallback((tag: string) => {
-    composerRef.current?.insertReply(tag);
+  const onReplyInsertTag = useCallback<ReplyTagHandler>((tag, origin) => {
+    composerRef.current?.insertReply(tag, origin);
   }, []);
 
   useVoxDetailScrollChain({

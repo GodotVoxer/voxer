@@ -1,6 +1,6 @@
 "use client";
 import type { RefObject } from "react";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getDocumentScrollElement } from "@/features/device/documentScroll";
@@ -19,17 +19,9 @@ import type { CommentTagBackref } from "@/features/comments/backrefs";
 import { VoxDetailCommentsToolbar } from "@/components/Vox/Detail/VoxDetailCommentsToolbar";
 import { VoxDetailCommentMediaGalleryDialog } from "@/components/Vox/Detail/VoxDetailCommentMediaGalleryDialog";
 import type { CommentGalleryItem } from "@/features/comments/galleryItems";
-
-const subscribeCommentsInnerScrollLg = (onChange: () => void) => {
-  const mq = window.matchMedia("(min-width: 1024px)");
-  mq.addEventListener("change", onChange);
-  return () => mq.removeEventListener("change", onChange);
-};
-
-const getCommentsInnerScrollLgSnapshot = () =>
-  typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
-
-const getCommentsInnerScrollLgServerSnapshot = () => true;
+import { useFloatingCommentComposer } from "@/hooks/comments/useFloatingCommentComposer";
+import { useTwoColumnLayout } from "@/hooks/device/useTwoColumnLayout";
+import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 
 type Props = {
   voxId: string;
@@ -44,7 +36,7 @@ type Props = {
   taggedByIndex: Map<string, CommentTagBackref[]>;
   repliesByTarget: Map<string, CommentPublic[]>;
   resolveComment: (tag: string) => CommentPublic | undefined;
-  onReplyTag: (tag: string) => void;
+  onReplyTag: ReplyTagHandler;
   onTagClick: (tag: string) => void;
   onOpenReplies: (publicTag: string) => void;
   onReportComment?: (comment: CommentPublic) => void;
@@ -109,16 +101,17 @@ export const VoxDetailCommentsPanel = ({
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [showScrollToComposerFab, setShowScrollToComposerFab] = useState(false);
   const [fabNearBottom, setFabNearBottom] = useState(false);
-  const commentsUseInnerScroll = useSyncExternalStore(
-    subscribeCommentsInnerScrollLg,
-    getCommentsInnerScrollLgSnapshot,
-    getCommentsInnerScrollLgServerSnapshot,
-  );
+  const commentsUseInnerScroll = useTwoColumnLayout();
   const composerAnchorRef = useRef<HTMLDivElement>(null);
   const threadStartRef = useRef<HTMLDivElement>(null);
   const pinnedSectionRef = useRef<HTMLDivElement>(null);
   const [threadScrollMargin, setThreadScrollMargin] = useState(0);
   const [pinnedScrollMargin, setPinnedScrollMargin] = useState(0);
+  const floatingComposer = useFloatingCommentComposer({
+    enabled: commentsUseInnerScroll,
+    slotRef: composerAnchorRef,
+    scrollRootRef: scrollParentRef,
+  });
 
   useEffect(() => {
     const compute = () => {
@@ -305,13 +298,18 @@ export const VoxDetailCommentsPanel = ({
           ref={composerAnchorRef}
           data-vox-comment-composer-anchor
           className={cn(!commentsUseInnerScroll && "scroll-mt-[var(--app-header-offset)]")}
+          style={{ minHeight: floatingComposer.slotMinHeight }}
         >
           <CommentComposer
             ref={composerRef}
             voxId={voxId}
-            onPosted={onPostedComment}
+            onPosted={(posted) => {
+              floatingComposer.close();
+              onPostedComment(posted);
+            }}
             pendingPollVote={pendingPollVote}
             onDismissPendingPollVote={onDismissPendingPollVote}
+            floating={floatingComposer}
           />
         </div>
 
@@ -401,7 +399,7 @@ export const VoxDetailCommentsPanel = ({
         </div>
       </div>
 
-      {showScrollToComposerFab ? (
+      {showScrollToComposerFab && floatingComposer.phase === "docked" ? (
         <Button
           type="button"
           size="icon"

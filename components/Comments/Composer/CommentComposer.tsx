@@ -1,7 +1,8 @@
 "use client";
 import { forwardRef, useImperativeHandle, useRef, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
-import { Link2, Paperclip, Trash2 } from "lucide-react";
+import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
+import { Link2, Paperclip, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FriendlyError } from "@/components/Shell/FriendlyError";
 import { BanBlockedDialog } from "@/components/Moderation/Dialogs/BanBlockedDialog";
@@ -13,6 +14,8 @@ import { getFirstClipboardVoxUploadFile } from "@/features/media/uploadClientFil
 import { appendReplyTagToDraft } from "@/lib/comments/replies";
 import { COMMENT_BODY_MAX, COMMENT_REPLY_TAGS_MAX } from "@/lib/limits";
 import { useCommentComposer } from "@/hooks/comments/useCommentComposer";
+import type { FloatingCommentComposer } from "@/hooks/comments/useFloatingCommentComposer";
+import { useFloatingComposerMotion } from "@/hooks/comments/useFloatingComposerMotion";
 import { useDropFilesOverlay } from "@/hooks/media/useDropFilesOverlay";
 import { useAutoGrowTextarea } from "@/hooks/common/useAutoGrowTextarea";
 import type { CommentPublic } from "@/lib/vox/types";
@@ -23,9 +26,11 @@ import {
   shouldSubmitCommentFromKey,
 } from "@/features/comments/submitShortcut";
 import { isStaffRole } from "@/lib/moderation/roles";
+import { cn } from "@/lib/utils";
+import { isTwoColumnLayout } from "@/features/device/twoColumnLayout";
 
 export type CommentComposerHandle = {
-  insertReply: (tag: string) => void;
+  insertReply: ReplyTagHandler;
 };
 
 type Props = {
@@ -33,12 +38,13 @@ type Props = {
   onPosted: (posted: CommentPublic) => void;
   pendingPollVote?: { optionId: string; label: string; badgeHue: number } | null;
   onDismissPendingPollVote?: () => void;
+  floating: FloatingCommentComposer;
 };
 
 const primaryBtn = "bg-brand-600 text-on-solid hover:bg-brand-500 shadow-sm";
 
 export const CommentComposer = forwardRef<CommentComposerHandle, Props>(
-  ({ voxId, onPosted, pendingPollVote = null, onDismissPendingPollVote }, ref) => {
+  ({ voxId, onPosted, pendingPollVote = null, onDismissPendingPollVote, floating }, ref) => {
     const fileRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const focusScrollCleanupRef = useRef<() => void>(() => undefined);
@@ -57,11 +63,24 @@ export const CommentComposer = forwardRef<CommentComposerHandle, Props>(
       setBodyRef.current = composer.setBody;
     }, [composer.setBody]);
 
+    const armFloatingRef = useRef(floating.arm);
+    useEffect(() => {
+      armFloatingRef.current = floating.arm;
+    }, [floating.arm]);
+
+    const panelRef = useRef<HTMLDivElement>(null);
+    useFloatingComposerMotion({
+      panelRef,
+      phase: floating.phase,
+      originRef: floating.originRef,
+      onClosed: floating.onClosed,
+    });
+
     useEffect(() => () => focusScrollCleanupRef.current(), []);
 
     const positionFocusedComposerAboveKeyboard = () => {
       focusScrollCleanupRef.current();
-      if (window.matchMedia("(min-width: 1024px)").matches) return;
+      if (isTwoColumnLayout()) return;
 
       const align = () => {
         const textarea = textareaRef.current;
@@ -95,7 +114,7 @@ export const CommentComposer = forwardRef<CommentComposerHandle, Props>(
     };
 
     const startMobileTouch = (event: React.TouchEvent<HTMLTextAreaElement>) => {
-      if (window.matchMedia("(min-width: 1024px)").matches || event.touches.length !== 1) return;
+      if (isTwoColumnLayout() || event.touches.length !== 1) return;
       const touch = event.touches[0];
       touchStartRef.current = { x: touch.clientX, y: touch.clientY };
       touchMovedRef.current = false;
@@ -127,16 +146,21 @@ export const CommentComposer = forwardRef<CommentComposerHandle, Props>(
     useImperativeHandle(
       ref,
       () => ({
-        insertReply: (tag: string) => {
+        insertReply: (tag, origin) => {
           const upper = tag.toUpperCase();
           flushSync(() => {
             setBodyRef.current((previous) =>
               appendReplyTagToDraft(previous, upper, COMMENT_REPLY_TAGS_MAX),
             );
           });
+          armFloatingRef.current(origin);
           requestAnimationFrame(() => {
             const element = textareaRef.current;
             if (!element) return;
+            // On touch screens this would open the keyboard over the comment being quoted.
+            if (isTwoColumnLayout()) {
+              element.focus({ preventScroll: true });
+            }
             const length = element.value.length;
             element.setSelectionRange(length, length);
           });
@@ -174,6 +198,7 @@ export const CommentComposer = forwardRef<CommentComposerHandle, Props>(
     const canShowStaffBadge = composer.authUser !== null && isStaffRole(composer.authUser.role);
     const hasLinkOnly = Boolean(composer.linkUrl.trim()) && !composer.file;
     const linkBtnActive = hasLinkOnly || linkDialogOpen;
+    const detached = floating.phase !== "docked";
 
     return (
       <>
@@ -191,10 +216,37 @@ export const CommentComposer = forwardRef<CommentComposerHandle, Props>(
         />
 
         <div
-          className="relative border-b border-fg/10 bg-surface-sunken/90 p-3 space-y-2 shrink-0"
+          ref={panelRef}
+          className={cn(
+            "relative border-b border-fg/10 bg-surface-sunken/90 p-3 space-y-2 shrink-0",
+            detached &&
+              "fixed top-[calc(50dvh+var(--app-header-offset)/2)] left-4 z-30 max-h-[calc(100dvh-var(--app-header-offset)-2rem)] w-[calc(50%-2rem)] -translate-y-1/2 overflow-y-auto rounded-lg border bg-surface-sunken shadow-2xl",
+          )}
+          onKeyDown={
+            floating.phase === "open"
+              ? (e) => {
+                  if (e.key === "Escape" && !e.defaultPrevented) floating.close();
+                }
+              : undefined
+          }
           {...dropHandlers}
         >
-          <p className="text-xs text-fg-subtle">Nuevo comentario</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-fg-subtle">Nuevo comentario</p>
+            {detached ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="-my-1 size-7 cursor-pointer text-fg-muted hover:bg-fg/10 hover:text-fg"
+                title="Cerrar (Esc)"
+                aria-label="Cerrar el cuadro flotante"
+                onClick={floating.close}
+              >
+                <X className="size-4" />
+              </Button>
+            ) : null}
+          </div>
           {pendingPollVote && onDismissPendingPollVote ? (
             <div className="flex flex-wrap items-center gap-2">
               <span

@@ -15,13 +15,14 @@ import { rangeWithPinnedIndexes } from "@/features/comments/threadRange";
 import { CommentMediaActivityProvider } from "@/components/Comments/Thread/CommentMediaActivity";
 import { CommentRow } from "@/components/Comments/Comment/CommentRow";
 import type { CommentThreadHandle } from "@/features/comments/threadHandle";
+import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 type Props = {
   comments: CommentPublic[];
   voxId: string;
   taggedByIndex: Map<string, CommentTagBackref[]>;
   repliesByTarget: Map<string, CommentPublic[]>;
   resolveComment: (publicTagUpper: string) => CommentPublic | undefined;
-  onReplyTag: (tag: string) => void;
+  onReplyTag: ReplyTagHandler;
   onTagClick: (tag: string) => void;
   onOpenReplies: (publicTag: string) => void;
   scrollParentRef: RefObject<HTMLDivElement | null>;

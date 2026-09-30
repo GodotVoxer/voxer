@@ -8,6 +8,7 @@ import type { CommentPublic } from "@/lib/vox/types";
 import type { CommentTagBackref } from "@/features/comments/backrefs";
 import { estimateCommentRowHeight } from "@/features/comments/threadEstimate";
 import { cn } from "@/lib/utils";
+import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 
 const PINNED_ROW_GAP_PX = 8;
 
@@ -33,7 +34,7 @@ type Props = {
   taggedByIndex: Map<string, CommentTagBackref[]>;
   repliesByTarget: Map<string, CommentPublic[]>;
   resolveComment: (publicTagUpper: string) => CommentPublic | undefined;
-  onReplyTag: (tag: string) => void;
+  onReplyTag: ReplyTagHandler;
   onTagClick: (tag: string) => void;
   onOpenReplies: (publicTag: string) => void;
   onReportComment?: (comment: CommentPublic) => void;

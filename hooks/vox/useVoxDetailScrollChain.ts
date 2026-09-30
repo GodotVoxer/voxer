@@ -2,10 +2,8 @@
 import { useEffect, type RefObject } from "react";
 import { chainedWheelDelta } from "@/features/vox/detail/scrollChain";
 import { wheelDeltaPixels } from "@/features/device/wheelDeltaPixels";
-
-/** Below `lg` there is a single document scroll and nothing to chain. */
-const TWO_COLUMN_MEDIA_QUERY = "(min-width: 1024px)";
-const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+import { isTwoColumnLayout } from "@/features/device/twoColumnLayout";
+import { prefersReducedMotion } from "@/features/device/reducedMotion";
 
 /** Share of the pending distance applied per frame: a short ease-out, like a native wheel notch. */
 const EASE_PER_FRAME = 0.3;
@@ -29,7 +27,6 @@ export const useVoxDetailScrollChain = ({ rowRef, sourceRef, targetRef, enabled 
   useEffect(() => {
     const row = rowRef.current;
     if (!enabled || !row) return;
-    const twoColumns = window.matchMedia(TWO_COLUMN_MEDIA_QUERY);
 
     let pending = 0;
     let frame = 0;
@@ -56,7 +53,7 @@ export const useVoxDetailScrollChain = ({ rowRef, sourceRef, targetRef, enabled 
 
     const onWheel = (e: WheelEvent) => {
       // With Ctrl the wheel zooms the browser.
-      if (e.ctrlKey || !twoColumns.matches) return;
+      if (e.ctrlKey || !isTwoColumnLayout()) return;
       const source = sourceRef.current;
       const target = targetRef.current;
       if (!source || !target) return;
@@ -75,7 +72,7 @@ export const useVoxDetailScrollChain = ({ rowRef, sourceRef, targetRef, enabled 
       if (delta === null) return;
       e.preventDefault();
 
-      if (window.matchMedia(REDUCED_MOTION_QUERY).matches) {
+      if (prefersReducedMotion()) {
         stop();
         target.scrollTop += delta;
         return;

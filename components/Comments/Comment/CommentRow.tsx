@@ -15,7 +15,7 @@ import { CountryFlagIcon } from "./CountryFlagIcon";
 import { CommentReplyNotificationsToggle } from "./CommentReplyNotificationsToggle";
 import { CommentPinToggle } from "./CommentPinToggle";
 import { CommentShareLinkButton } from "./CommentShareLinkButton";
-import { CommentTagButton } from "./CommentTagButton";
+import { CommentTagButton, type ReplyTagHandler } from "./CommentTagButton";
 import { CommentStaffMenu } from "./CommentStaffMenu";
 
 type Props = {
@@ -24,7 +24,7 @@ type Props = {
   /** For the comment's share link: `CommentPublic` does not carry its vox. */
   voxId: string;
   highlighted?: boolean;
-  onReplyTag: (tag: string) => void;
+  onReplyTag: ReplyTagHandler;
   onTagClick: (tag: string) => void;
   taggedBy: CommentTagBackref[];
   resolveComment: (publicTagUpper: string) => CommentPublic | undefined;

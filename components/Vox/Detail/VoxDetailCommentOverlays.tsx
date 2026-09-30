@@ -4,6 +4,7 @@ import { CommentTagPopup } from "@/components/Comments/Overlays/CommentTagPopup"
 import type { CommentPublic } from "@/lib/vox/types";
 import type { CommentTagBackref } from "@/features/comments/backrefs";
 import type { CommentRowActions } from "@/features/comments/commentRowActions";
+import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 
 type Props = {
   voxId: string;
@@ -21,7 +22,7 @@ type Props = {
   repliesList: CommentPublic[];
   taggedByIndex: Map<string, CommentTagBackref[]>;
   repliesByTarget: Map<string, CommentPublic[]>;
-  onReplyTag: (tag: string) => void;
+  onReplyTag: ReplyTagHandler;
   /** The same buttons as the thread row, so dialogs are not stripped of them. */
   actions?: CommentRowActions;
 };

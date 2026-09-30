@@ -7,6 +7,7 @@ import {
 } from "@/features/comments/commentRowActions";
 import { CommentRow } from "@/components/Comments/Comment/CommentRow";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 
 type Props = {
   open: boolean;
@@ -16,7 +17,7 @@ type Props = {
   taggedBy: CommentTagBackref[];
   repliesCount: number;
   resolveComment: (publicTagUpper: string) => CommentPublic | undefined;
-  onReplyTag: (tag: string) => void;
+  onReplyTag: ReplyTagHandler;
   onTagClick: (publicTag: string) => void;
   onOpenReplies: (publicTag: string) => void;
   actions?: CommentRowActions;
