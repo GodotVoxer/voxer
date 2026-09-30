@@ -1,5 +1,7 @@
 # Voxer
 
+[![CI](https://github.com/GodotVoxer/voxer/actions/workflows/ci.yml/badge.svg)](https://github.com/GodotVoxer/voxer/actions/workflows/ci.yml)
+
 Foros anónimos al estilo de los imageboards. Alguien publica un _vox_ (un tema con título, una imagen, video, GIF o link de YouTube opcional y, si quiere, una encuesta) y los demás responden en tiempo real, sin que su identidad llegue nunca a otros usuarios.
 
 La web también corre dentro de una app Android liviana, con notificaciones nativas.
