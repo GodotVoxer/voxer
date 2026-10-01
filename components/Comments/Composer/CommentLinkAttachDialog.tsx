@@ -19,7 +19,7 @@ import { youtubeThumbnailUrl } from "@/lib/media/youtube";
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Link already applied in the composer; copied into the draft on every opening, including from the parent. */
+  /** Link already applied in the composer; copied into the draft on open. */
   initialDraft: string;
   onApply: (trimmedUrl: string) => void;
   /** Pasting an image from the clipboard uses it as a file attachment and closes the dialog. */
