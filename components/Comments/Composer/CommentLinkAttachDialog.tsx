@@ -19,7 +19,7 @@ import { youtubeThumbnailUrl } from "@/lib/media/youtube";
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Link already applied in the composer; copied into the draft on open. */
+  /** Link already applied in the composer; copied into the draft on every opening, including from the parent. */
   initialDraft: string;
   onApply: (trimmedUrl: string) => void;
   /** Pasting an image from the clipboard uses it as a file attachment and closes the dialog. */
@@ -50,11 +50,11 @@ export const CommentLinkAttachDialog = ({
   onPasteImageFile,
 }: Props) => {
   const [draft, setDraft] = useState(initialDraft);
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) setDraft(initialDraft);
-    onOpenChange(nextOpen);
-  };
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setDraft(initialDraft);
+  }
 
   const preview = useMemo(() => previewFromDraft(draft), [draft]);
   const canApply = Boolean(parseMediaLink(draft.trim()));
@@ -74,7 +74,7 @@ export const CommentLinkAttachDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-fg/10 sm:max-w-md" showClose>
         <div className="relative grid min-h-0 w-full gap-4" {...dropHandlers}>
           <DialogHeader>

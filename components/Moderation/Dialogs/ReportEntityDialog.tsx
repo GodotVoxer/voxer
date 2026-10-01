@@ -46,12 +46,21 @@ export const ReportEntityDialog = ({ open, onOpenChange, voxId, voxTitle, commen
     }
   };
 
-  const reset = () => {
+  // Reset on opening rather than on closing, so the success view does not flip back to the form while it fades out.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setReason(ReportReasonEnum.WRONG_CATEGORY);
+      setDetails("");
+      setErr(null);
+      setPhase("idle");
+    }
+  }
+
+  const close = () => {
     clearAutoCloseTimer();
-    setReason(ReportReasonEnum.WRONG_CATEGORY);
-    setDetails("");
-    setErr(null);
-    setPhase("idle");
+    onOpenChange(false);
   };
 
   useEffect(() => {
@@ -75,7 +84,7 @@ export const ReportEntityDialog = ({ open, onOpenChange, voxId, voxTitle, commen
         clearAutoCloseTimer();
         autoCloseTimerRef.current = setTimeout(() => {
           autoCloseTimerRef.current = null;
-          onOpenChange(false);
+          close();
         }, SUCCESS_AUTO_CLOSE_MS);
       } catch (e) {
         setErr(userFacingApiErrorMessage(e) ?? "No se pudo enviar la denuncia. Probá de nuevo.");
@@ -89,13 +98,13 @@ export const ReportEntityDialog = ({ open, onOpenChange, voxId, voxTitle, commen
       open={open}
       onOpenChange={(o) => {
         if (!o && submitting) return;
-        onOpenChange(o);
-        if (!o) reset();
+        if (o) onOpenChange(true);
+        else close();
       }}
     >
       <DialogContent className="border-fg/10 sm:max-w-md">
         {succeeded ? (
-          <ReportEntityDialogSuccess onClose={() => onOpenChange(false)} />
+          <ReportEntityDialogSuccess onClose={close} />
         ) : (
           <ReportEntityDialogForm
             voxTitle={voxTitle}
@@ -107,7 +116,7 @@ export const ReportEntityDialog = ({ open, onOpenChange, voxId, voxTitle, commen
             onDetailsChange={setDetails}
             err={err}
             submitting={submitting}
-            onCancel={() => onOpenChange(false)}
+            onCancel={close}
             onSubmit={submit}
           />
         )}

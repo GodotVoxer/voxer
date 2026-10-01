@@ -27,6 +27,7 @@ Android: `cd android && ./gradlew :app:testDebugUnitTest :app:assembleDebug`.
 
 - Keep changes scoped to the request. Give dialogs, forms and sizeable blocks their own component file instead of growing pages or views.
 - Pure logic goes next to a `*.test.ts`. Behavior changes need tests; run `npm run validate` before finishing.
+- Forms clear their fields after a successful submit, never after an error. A dialog that keeps state while closed reseeds it on every opening, including openings driven by the parent, which skip Radix's `onOpenChange`.
 - Reuse before writing: look for an existing helper or hook (breakpoints in `features/device/`, `hooks/device/`) and extract a shared one instead of duplicating logic.
 - Imports use `@/`, no barrel files. The browser calls the API only through `features/http/apiClient.ts` and `features/*/api.ts`.
 - Route handlers validate, delegate to `server/`, and answer with `server/http/apiErrors.ts`.
