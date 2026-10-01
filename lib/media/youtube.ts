@@ -21,6 +21,9 @@ export const youtubeThumbnailUrl = (videoId: string, quality: "hq" | "max" = "hq
     : `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 };
 
+export const youtubeWatchUrl = (videoId: string): string =>
+  `https://www.youtube.com/watch?v=${videoId}`;
+
 export const isYoutubeEmbedUrl = (url: string): boolean => {
   const t = url.trim();
   return /^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com)\/embed\/[a-zA-Z0-9_-]{11}(\?|#|$)/i.test(

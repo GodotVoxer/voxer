@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { clearNotificationPanelCaches } from "@/features/notifications/panelCacheStore";
-import { writeSessionHint } from "@/features/auth/sessionHint";
 import { fetchMe, logoutRequest, type MeUser } from "./api";
 type AuthUser = MeUser;
 type AuthState = {
@@ -64,10 +63,3 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 }));
-
-if (typeof window !== "undefined") {
-  // Only after `/auth/me` resolved: while loading, `user` is null even with a session.
-  useAuthStore.subscribe((s) => {
-    if (!s.loading) writeSessionHint(s.user !== null);
-  });
-}

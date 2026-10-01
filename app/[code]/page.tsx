@@ -5,13 +5,7 @@ import { AppInitializer } from "@/components/Shell/AppInitializer";
 import { PageShell } from "@/components/Shell/PageShell";
 import { VoxGrid } from "@/components/Vox/Grid/VoxGrid";
 import { ALL_CATEGORY_CODES, getCategoryFromCode } from "@/lib/vox/categoryCodes";
-import { loadInitialFeedPage } from "@/server/vox/initialFeedPage";
-/**
- * One page per code, regenerated every 15 s with the public first page embedded (the same cache as
- * `GET /api/vox`): the HTML does not depend on the user and CDNs can cache it. Unknown codes 404.
- */
 export const dynamicParams = false;
-export const revalidate = 15;
 export const generateStaticParams = () => ALL_CATEGORY_CODES.map((code) => ({ code }));
 
 type Props = {
@@ -30,7 +24,6 @@ const CategoryHomePage = async ({ params }: Props) => {
   const upper = code.trim().toUpperCase();
   const category = getCategoryFromCode(upper);
   if (!category) notFound();
-  const initialPage = await loadInitialFeedPage(category);
   return (
     <AppInitializer>
       <PageShell className="px-3 sm:px-4">
@@ -42,7 +35,7 @@ const CategoryHomePage = async ({ params }: Props) => {
           <span className="font-medium text-fg">{category}</span>
           <span className="font-mono text-xs text-fg-subtle">/{upper}</span>
         </div>
-        <VoxGrid categoryCode={upper} initialPage={initialPage} listView="default" />
+        <VoxGrid categoryCode={upper} listView="default" />
       </PageShell>
     </AppInitializer>
   );

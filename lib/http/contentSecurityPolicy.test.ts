@@ -61,6 +61,17 @@ describe("buildContentSecurityPolicy", () => {
     expect(csp.split("; ")).not.toContain("upgrade-insecure-requests");
   });
 
+  it("lets the MSW demo worker fetch YouTube thumbnails, only with mocks", () => {
+    const demo = buildContentSecurityPolicy({
+      NODE_ENV: "development",
+      NEXT_PUBLIC_USE_MOCKS: "true",
+    });
+    expect(directive(demo, "connect-src")).toContain("https://img.youtube.com");
+    expect(directive(buildContentSecurityPolicy(prodEnv), "connect-src")).not.toContain(
+      "https://img.youtube.com",
+    );
+  });
+
   it("ignores invalid environment URLs", () => {
     const csp = buildContentSecurityPolicy({
       NODE_ENV: "production",

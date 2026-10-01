@@ -21,7 +21,7 @@ const voxListRows: Omit<VoxListItem, "pinnedAt">[] = [
     coverGifUrl: null,
     animatedImage: false,
     mediaType: "YOUTUBE",
-    thumbnailUrl: "https://img.youtube.com/vi/9NpvbTe8-eA/hqdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg",
   },
   {
     id: "msw-demo-pill-upload",

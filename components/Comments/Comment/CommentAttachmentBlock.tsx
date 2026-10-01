@@ -1,11 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { isYoutubeEmbedUrl } from "@/lib/media/youtube";
-import {
-  YOUTUBE_EMBED_IFRAME_SANDBOX,
-  youtubeEmbedSrcFromUrl,
-} from "@/features/media/youtubeIframe";
+import { useCallback } from "react";
+import { extractYoutubeVideoId, isYoutubeEmbedUrl } from "@/lib/media/youtube";
+import { LazyYoutubeEmbed } from "@/components/Media/LazyYoutubeEmbed";
 import { LazyNativeVideo } from "@/components/Media/LazyNativeVideo";
 import { LoopingVideo } from "@/components/Media/LoopingVideo";
 import { useCommentMediaActivity } from "@/components/Comments/Thread/CommentMediaActivity";
@@ -35,11 +32,10 @@ export const CommentAttachmentBlock = ({
   animatedImage = false,
   mediaClassName = commentThreadMediaClassName,
 }: Props) => {
-  const ytEmbedSrc =
-    videoUrl && isYoutubeEmbedUrl(videoUrl) ? youtubeEmbedSrcFromUrl(videoUrl) : null;
+  const youtubeId =
+    videoUrl && isYoutubeEmbedUrl(videoUrl) ? extractYoutubeVideoId(videoUrl) : null;
   const activity = useCommentMediaActivity();
   const openMediaViewer = useMediaViewerOpener();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const onPlayerOpenChange = useCallback(
     (open: boolean) => {
@@ -47,21 +43,6 @@ export const CommentAttachmentBlock = ({
     },
     [activity, commentId],
   );
-
-  // YouTube runs in a cross-origin iframe that never reports playback, but tapping it takes focus.
-  useEffect(() => {
-    if (!ytEmbedSrc || !commentId || !activity) return;
-    const onWindowBlur = () => {
-      if (document.activeElement === iframeRef.current) {
-        activity.setCommentMediaOpen(commentId, true);
-      }
-    };
-    window.addEventListener("blur", onWindowBlur);
-    return () => {
-      window.removeEventListener("blur", onWindowBlur);
-      activity.setCommentMediaOpen(commentId, false);
-    };
-  }, [activity, commentId, ytEmbedSrc]);
 
   return (
     <>
@@ -78,23 +59,17 @@ export const CommentAttachmentBlock = ({
           <img src={imageUrl} alt="" decoding="async" className={mediaClassName} />
         </a>
       ) : null}
-      {videoUrl && ytEmbedSrc ? (
-        <div className="relative aspect-video w-full overflow-hidden rounded-md border border-fg/10 bg-shade">
-          <iframe
-            ref={iframeRef}
-            title="Video de YouTube en comentario"
-            className="absolute inset-0 h-full w-full"
-            src={ytEmbedSrc}
-            sandbox={YOUTUBE_EMBED_IFRAME_SANDBOX}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
+      {youtubeId ? (
+        <LazyYoutubeEmbed
+          videoId={youtubeId}
+          title="Video de YouTube en comentario"
+          onPlayerOpenChange={onPlayerOpenChange}
+        />
       ) : null}
-      {videoUrl && !ytEmbedSrc && animatedImage ? (
+      {videoUrl && !youtubeId && animatedImage ? (
         <LoopingVideo src={videoUrl} posterUrl={videoPosterUrl} className={mediaClassName} />
       ) : null}
-      {videoUrl && !ytEmbedSrc && !animatedImage ? (
+      {videoUrl && !youtubeId && !animatedImage ? (
         <LazyNativeVideo
           videoSrc={videoUrl}
           posterUrl={videoPosterUrl?.trim() || null}

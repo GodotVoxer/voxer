@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { extractYoutubeVideoId, isYoutubeEmbedUrl, youtubeThumbnailUrl } from "./youtube";
+import {
+  extractYoutubeVideoId,
+  isYoutubeEmbedUrl,
+  youtubeThumbnailUrl,
+  youtubeWatchUrl,
+} from "./youtube";
 describe("extractYoutubeVideoId", () => {
   it("extracts the id from a watch URL", () => {
     expect(extractYoutubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe(
@@ -39,6 +44,11 @@ describe("youtubeThumbnailUrl", () => {
     expect(youtubeThumbnailUrl("dQw4w9WgXcQ", "max")).toBe(
       "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
     );
+  });
+});
+describe("youtubeWatchUrl", () => {
+  it("builds the watch page URL", () => {
+    expect(youtubeWatchUrl("dQw4w9WgXcQ")).toBe("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
   });
 });
 describe("isYoutubeEmbedUrl", () => {

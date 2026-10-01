@@ -1,5 +1,10 @@
 import type { CommentPublic } from "@/lib/vox/types";
-import { extractYoutubeVideoId, isYoutubeEmbedUrl, youtubeThumbnailUrl } from "@/lib/media/youtube";
+import {
+  extractYoutubeVideoId,
+  isYoutubeEmbedUrl,
+  youtubeThumbnailUrl,
+  youtubeWatchUrl,
+} from "@/lib/media/youtube";
 
 export type CommentGalleryItem =
   | { kind: "image"; url: string }
@@ -27,7 +32,7 @@ export const collectCommentGalleryItems = (comments: CommentPublic[]): CommentGa
       if (ytId) {
         out.push({
           kind: "video_youtube",
-          openUrl: `https://www.youtube.com/watch?v=${ytId}`,
+          openUrl: youtubeWatchUrl(ytId),
           thumbnailUrl: youtubeThumbnailUrl(ytId, "hq"),
         });
       }

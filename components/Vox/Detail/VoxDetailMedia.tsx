@@ -4,10 +4,7 @@ import { useMediaViewerOpener } from "@/hooks/media/useMediaViewerOpener";
 import { LazyNativeVideo } from "@/components/Media/LazyNativeVideo";
 import { LoopingVideo } from "@/components/Media/LoopingVideo";
 import { extractYoutubeVideoId } from "@/lib/media/youtube";
-import {
-  YOUTUBE_EMBED_IFRAME_SANDBOX,
-  youtubeNocookieEmbedSrc,
-} from "@/features/media/youtubeIframe";
+import { LazyYoutubeEmbed } from "@/components/Media/LazyYoutubeEmbed";
 import {
   VOX_DETAIL_MEDIA_IMAGE_CLASS,
   VOX_DETAIL_MEDIA_VIDEO_CLASS,
@@ -38,16 +35,11 @@ export const VoxDetailMedia = ({
 
   if (mediaType === "YOUTUBE" && youtubeId) {
     return (
-      <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-media-scrim border border-fg/10">
-        <iframe
-          title={alt}
-          className="absolute inset-0 h-full w-full"
-          src={youtubeNocookieEmbedSrc(youtubeId)}
-          sandbox={YOUTUBE_EMBED_IFRAME_SANDBOX}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
+      <LazyYoutubeEmbed
+        videoId={youtubeId}
+        title={alt}
+        frameClassName="rounded-lg border border-fg/10 bg-media-scrim"
+      />
     );
   }
   if (mediaType === "UPLOADED_VIDEO" && mediaUrl && animatedImage) {

@@ -44,6 +44,8 @@ export const buildContentSecurityPolicy = (env: CspEnv = process.env): string =>
         ...(r2PublicOrigin ? [r2PublicOrigin] : []),
         ...(socketOrigin ? [socketOrigin, webSocketOriginOf(socketOrigin)] : []),
         ...(isDev ? ["ws:"] : []),
+        // The MSW worker refetches every image with `fetch`, which falls under connect-src.
+        ...(env.NEXT_PUBLIC_USE_MOCKS === "true" ? ["https://img.youtube.com"] : []),
       ],
     ],
     [

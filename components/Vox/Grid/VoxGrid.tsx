@@ -5,8 +5,7 @@ import {
   isCategoryVisibleOnHome,
   useCategoryFilterStore,
 } from "@/features/vox/categoryFilterStore";
-import type { VoxListPage, VoxListView } from "@/lib/vox/types";
-import { readSessionHint } from "@/features/auth/sessionHint";
+import type { VoxListView } from "@/lib/vox/types";
 import { getCategoryFromCode } from "@/lib/vox/categoryCodes";
 import { Button } from "@/components/ui/button";
 import { FriendlyError } from "@/components/Shell/FriendlyError";
@@ -28,20 +27,13 @@ const voxGridTrackPaddingStyle = {
 
 type Props = {
   categoryCode?: string | null;
-  /** Public first page embedded in the HTML (home and `/[code]`), used only without a session. */
-  initialPage?: VoxListPage | null;
   listView?: VoxListView;
   /** Title search through the API for the main list; not combined with `categoryCode`. */
   searchQuery?: string | null;
 };
 
-export const VoxGrid = ({
-  categoryCode,
-  initialPage,
-  listView = "default",
-  searchQuery,
-}: Props) => {
-  const { feeds, fetchInitialPage, fetchNextPage, seedDefaultFeed } = useVoxStore();
+export const VoxGrid = ({ categoryCode, listView = "default", searchQuery }: Props) => {
+  const { feeds, fetchInitialPage, fetchNextPage } = useVoxStore();
   const feed = feeds[listView];
   const enabledByCategory = useCategoryFilterStore((s) => s.enabledByCategory);
   const searchMode = Boolean(searchQuery?.trim()) && listView === "default";
@@ -51,16 +43,6 @@ export const VoxGrid = ({
   useEffect(() => {
     if (!homeFeedRealtimeEnabled) clearPendingNewVox();
   }, [homeFeedRealtimeEnabled, categoryCode, clearPendingNewVox]);
-
-  // Before the first paint and before the effect that calls the API: the grid shows without waiting
-  // for the network and that request refreshes it. Not with a session: the public list would show hidden vox.
-  useLayoutEffect(() => {
-    if (!initialPage || listView !== "default" || searchQuery?.trim()) return;
-    if (readSessionHint()) return;
-    seedDefaultFeed(initialPage, categoryCode ?? null);
-    // Mount only: afterwards the grid lives on the store and realtime events.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     void fetchInitialPage(listView, {

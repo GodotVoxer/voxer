@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { getVoxListPage } from "./api";
-import type { VoxListItem, VoxListPage, VoxListView } from "@/lib/vox/types";
+import type { VoxListItem, VoxListView } from "@/lib/vox/types";
 import {
   applyVoxPinToItems,
   patchVoxListItemsInPlace,
@@ -45,7 +45,6 @@ interface VoxState {
   defaultListSearchQuery: string | null;
   currentListView: VoxListView;
   /** Loads the first page embedded in the HTML; the usual `fetchInitialPage` refreshes it in the background. */
-  seedDefaultFeed: (page: VoxListPage, categoryCode: string | null) => void;
   fetchInitialPage: (
     view?: VoxListView,
     opts?: {
@@ -104,28 +103,6 @@ export const useVoxStore = create<VoxState>((set, get) => ({
 
   resetView: (view: VoxListView) => {
     set((s) => ({ feeds: { ...s.feeds, [view]: emptyFeed() } }));
-  },
-
-  seedDefaultFeed: (page, categoryCode) => {
-    const code = normalizeListCategoryCode(categoryCode);
-    const sameList = get().defaultListCategoryCode === code && !get().defaultListSearchQuery;
-    // When the store already has this list, it is newer than the HTML's (which may come from the router cache).
-    if (sameList && get().feeds.default.items.length > 0) return;
-    set((s) => ({
-      defaultListCategoryCode: code,
-      defaultListSearchQuery: null,
-      currentListView: "default",
-      pendingNewVox: false,
-      feeds: {
-        ...s.feeds,
-        default: {
-          ...emptyFeed(),
-          items: page.items,
-          nextCursor: page.nextCursor,
-          hasMore: page.hasMore,
-        },
-      },
-    }));
   },
 
   fetchInitialPage: async (
