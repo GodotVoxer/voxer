@@ -2,6 +2,7 @@ import {
   CLIENT_IMAGE_SKIP_PROCESS_MAX_BYTES,
   CLIENT_IMAGE_UPLOAD_MAX_SIDE_PX,
 } from "@/lib/media/uploadLimits";
+import { canvasReadbackIsFaithful } from "@/features/media/canvasReadbackProbe";
 
 /** Fit-inside scaling to a maximum side, never upscaling. */
 export const scaleToFitMaxSide = (
@@ -43,7 +44,10 @@ const canvasToBlob = (
     canvas.toBlob((b) => resolve(b), type, quality);
   });
 
-/** Shrinks pixels and weight in the browser before upload; animated GIFs and environments without canvas are untouched. */
+/**
+ * Shrinks pixels and weight in the browser before upload. Animated GIFs, environments without
+ * canvas and browsers that fake canvas reads upload the original, which the server processes anyway.
+ */
 export const prepareClientImageFileForUpload = async (file: File): Promise<File> => {
   const mime = file.type || "application/octet-stream";
   if (typeof document === "undefined" || typeof createImageBitmap === "undefined") {
@@ -64,6 +68,10 @@ export const prepareClientImageFileForUpload = async (file: File): Promise<File>
     const largeSides = Math.max(w0, h0) > CLIENT_IMAGE_UPLOAD_MAX_SIDE_PX;
     const largeFile = file.size > CLIENT_IMAGE_SKIP_PROCESS_MAX_BYTES;
     if (!largeSides && !largeFile) {
+      bmp.close();
+      return file;
+    }
+    if (!canvasReadbackIsFaithful()) {
       bmp.close();
       return file;
     }
