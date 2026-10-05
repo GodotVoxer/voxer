@@ -61,6 +61,8 @@ npx wrangler secret put AUTH_SECRET               # el mismo valor que en la app
 npx wrangler deploy
 ```
 
+Para que ninguna página de otro sitio pueda abrir sockets, agregá en la config del Worker `"vars": { "ALLOWED_ORIGIN": "https://tu-dominio" }` con el origen del sitio (varios, separados por comas).
+
 Definí `NEXT_PUBLIC_REALTIME_MODE=durable` y `NEXT_PUBLIC_SOCKET_URL` al compilar, y `REALTIME_BROADCAST_ENABLED=true`, `SOCKET_SERVER_URL` y `SOCKET_BROADCAST_SECRET` en `app.env`. Para dominios propios y resolución de problemas, ver [tiempo real](realtime.md).
 
 ## 6. Backups y tareas programadas

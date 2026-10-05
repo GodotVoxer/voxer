@@ -10,13 +10,15 @@ import {
   isAllowedInternalEmitRoom,
   PRESENCE_GLOBAL_ROOM,
 } from "../../lib/realtime/rooms";
+import { isAllowedSocketOrigin } from "../../lib/realtime/socketOrigin";
 import { verifySocketJoinToken } from "../../lib/realtime/socketToken";
 
 export type Env = {
   ROOM: DurableObjectNamespace;
   SOCKET_BROADCAST_SECRET: string;
   AUTH_SECRET: string;
-  ALLOWED_ORIGIN: string;
+  /** Comma-separated site origins allowed to open sockets; unset disables the check. */
+  ALLOWED_ORIGIN?: string;
 };
 
 /** Same as `server/realtime/broadcast.ts`: room, event and opaque data. */
@@ -206,6 +208,9 @@ export default {
     }
 
     if (url.pathname === "/ws") {
+      if (!isAllowedSocketOrigin(request.headers.get("origin"), env.ALLOWED_ORIGIN)) {
+        return json({ error: "Forbidden" }, 403);
+      }
       const room = url.searchParams.get("room");
       if (!isAllowedInternalEmitRoom(room)) return json({ error: "Invalid room" }, 400);
 

@@ -36,7 +36,7 @@ Cómo protege Voxer a sus usuarios, y las invariantes que cualquier cambio tiene
 
 ## Tiempo real
 
-El Worker valida los ids de sala, compara el secreto de emisión en tiempo constante, solo acepta las salas y eventos de la lista compartida, y exige un JWT de corta duración para las salas privadas de usuario. Ver [tiempo real](realtime.md).
+El Worker valida los ids de sala, compara el secreto de emisión en tiempo constante, solo acepta las salas y eventos de la lista compartida, exige un JWT de corta duración para las salas privadas de usuario y, con `ALLOWED_ORIGIN`, rechaza los sockets abiertos desde páginas de otros sitios. Ver [tiempo real](realtime.md).
 
 ## Push
 
