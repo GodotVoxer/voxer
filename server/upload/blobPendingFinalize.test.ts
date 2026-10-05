@@ -1,18 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  completeBlobUpload,
-  discardBlobUpload,
+  claimBlobFinalizeSlot,
+  deleteBlobOriginal,
   pruneExpiredBlobPendingFinalizes,
   registerBlobFinalizeSlot,
-  releaseBlobFinalizeSlot,
-  verifyBlobFinalizeAuthorization,
 } from "./blobPendingFinalize";
 
-const { deleteMany, findUnique, findMany, upsert, storedFindFirst, deleteR2ObjectByKey } =
+const { deleteMany, updateMany, findMany, upsert, storedFindFirst, deleteR2ObjectByKey } =
   vi.hoisted(() => ({
     deleteMany: vi.fn(),
-    findUnique: vi.fn(),
+    updateMany: vi.fn(),
     findMany: vi.fn(),
     upsert: vi.fn(),
     storedFindFirst: vi.fn(),
@@ -21,7 +19,7 @@ const { deleteMany, findUnique, findMany, upsert, storedFindFirst, deleteR2Objec
 
 vi.mock("@/server/db/prisma", () => ({
   prisma: {
-    blobPendingPutFinalize: { deleteMany, findUnique, findMany, upsert },
+    blobPendingPutFinalize: { deleteMany, updateMany, findMany, upsert },
     storedMediaByHash: { findFirst: storedFindFirst },
   },
 }));
@@ -56,25 +54,23 @@ describe("blobPendingFinalize", () => {
     );
   });
 
-  it("verifyBlobFinalizeAuthorization requires the same user and a live slot", async () => {
-    findUnique.mockResolvedValue({
-      userId: "user-1",
-      expiresAt: new Date(Date.now() + 60_000),
+  it("claimBlobFinalizeSlot consumes a live slot of the same user, atomically", async () => {
+    updateMany.mockResolvedValue({ count: 1 });
+    await expect(claimBlobFinalizeSlot("incoming/2026/05/u.webp", "user-1")).resolves.toBe(true);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: {
+        pathname: "incoming/2026/05/u.webp",
+        userId: "user-1",
+        consumedAt: null,
+        expiresAt: { gt: expect.any(Date) },
+      },
+      data: { consumedAt: expect.any(Date) },
     });
-    await expect(verifyBlobFinalizeAuthorization("uploads/2026/05/u.webp", "user-1")).resolves.toBe(
-      true,
-    );
-    await expect(verifyBlobFinalizeAuthorization("uploads/2026/05/u.webp", "user-2")).resolves.toBe(
-      false,
-    );
   });
 
-  it("releaseBlobFinalizeSlot deletes by pathname and userId", async () => {
-    deleteMany.mockResolvedValue({ count: 1 });
-    await releaseBlobFinalizeSlot("uploads/2026/05/u.webp", "user-1");
-    expect(deleteMany).toHaveBeenCalledWith({
-      where: { pathname: "uploads/2026/05/u.webp", userId: "user-1" },
-    });
+  it("claimBlobFinalizeSlot loses when another finalize already claimed the slot", async () => {
+    updateMany.mockResolvedValue({ count: 0 });
+    await expect(claimBlobFinalizeSlot("incoming/2026/05/u.webp", "user-1")).resolves.toBe(false);
   });
 
   it("prune deletes the object of expired slots that never finalized", async () => {
@@ -103,27 +99,16 @@ describe("blobPendingFinalize", () => {
     expect(deleteMany).not.toHaveBeenCalled();
   });
 
-  it("discardBlobUpload deletes the object and releases the slot", async () => {
-    await discardBlobUpload("uploads/2026/05/d.webm", "user-1");
-    expect(deleteR2ObjectByKey).toHaveBeenCalledWith("uploads/2026/05/d.webm");
-    expect(deleteMany).toHaveBeenCalledWith({
-      where: { pathname: "uploads/2026/05/d.webm", userId: "user-1" },
-    });
+  it("deleteBlobOriginal deletes the object and keeps the slot row for the prune", async () => {
+    await deleteBlobOriginal("incoming/2026/05/e.mp4");
+    expect(deleteR2ObjectByKey).toHaveBeenCalledWith("incoming/2026/05/e.mp4");
+    expect(deleteMany).not.toHaveBeenCalled();
   });
 
-  it("completeBlobUpload deletes the original and releases the slot", async () => {
-    await completeBlobUpload("uploads/2026/05/e.mp4", "user-1");
-    expect(deleteR2ObjectByKey).toHaveBeenCalledWith("uploads/2026/05/e.mp4");
-    expect(deleteMany).toHaveBeenCalledWith({
-      where: { pathname: "uploads/2026/05/e.mp4", userId: "user-1" },
-    });
-  });
-
-  it("completeBlobUpload keeps the slot when the original cannot be deleted, without throwing", async () => {
+  it("deleteBlobOriginal does not throw when the delete fails", async () => {
     deleteR2ObjectByKey.mockRejectedValue(new Error("r2 down"));
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
-    await expect(completeBlobUpload("uploads/2026/05/f.mp4", "user-1")).resolves.toBeUndefined();
-    expect(deleteMany).not.toHaveBeenCalled();
+    await expect(deleteBlobOriginal("incoming/2026/05/f.mp4")).resolves.toBeUndefined();
     err.mockRestore();
   });
 });

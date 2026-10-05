@@ -32,7 +32,10 @@ for (const [address, prefix] of [
   // NAT64 could reach a private IPv4 address; IPv4-mapped ones are unwrapped below.
   ["64:ff9b::", 96],
   ["100::", 64],
+  // Teredo and 6to4 embed an IPv4 address that may be private.
+  ["2001::", 32],
   ["2001:db8::", 32],
+  ["2002::", 16],
   ["fc00::", 7],
   ["fe80::", 10],
   ["ff00::", 8],

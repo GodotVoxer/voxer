@@ -465,10 +465,12 @@ enum StoredMediaKind {
 
 /** Objeto R2 reservado en POST /api/upload/blob-token; solo ese usuario puede POST finalize para ese pathname. */
 model BlobPendingPutFinalize {
-  pathname  String   @id
-  userId    String
-  createdAt DateTime @default(now())
-  expiresAt DateTime
+  pathname   String    @id
+  userId     String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  /** Lo marca el finalize que ganó; la fila queda hasta vencer para que la limpieza borre lo que se resuba con la URL firmada. */
+  consumedAt DateTime?
 
   @@index([userId])
   @@index([expiresAt])

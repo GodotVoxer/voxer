@@ -23,11 +23,7 @@ import {
   buildStrippedVideoPosterUrl,
   ensureDedupedVideoPosterUrl,
 } from "@/server/media/videoPoster";
-import {
-  completeBlobUpload,
-  discardBlobUpload,
-  verifyBlobFinalizeAuthorization,
-} from "@/server/upload/blobPendingFinalize";
+import { claimBlobFinalizeSlot, deleteBlobOriginal } from "@/server/upload/blobPendingFinalize";
 import { guardUploadRequest } from "@/server/upload/guard";
 import { VIDEO_MIME_TYPES, videoContainerOf, videoMimeOf } from "@/lib/media/videoFormat";
 
@@ -65,7 +61,7 @@ export const POST = async (req: Request) => {
   if (!pathname) {
     return jsonError("URL de video no permitida", 400);
   }
-  const authorized = await verifyBlobFinalizeAuthorization(pathname, userId);
+  const authorized = await claimBlobFinalizeSlot(pathname, userId);
   if (!authorized) {
     return jsonError("No tenés permiso para finalizar esta subida.", 403);
   }
@@ -73,17 +69,17 @@ export const POST = async (req: Request) => {
   try {
     read = await readR2ObjectBuffer(pathname, UPLOAD_MAX_VIDEO_BYTES);
   } catch {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return jsonError("No se pudo leer el video subido", 502);
   }
   if (!read.ok) {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return read.reason === "too_large"
       ? jsonError("El video es demasiado grande", 413)
       : jsonError("No se pudo leer el video subido", 502);
   }
   if (!isAllowedFetchedVideo(read.contentType, pathname)) {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return jsonError("Tipo de video no permitido", 415);
   }
   const buf = read.body;
@@ -92,7 +88,7 @@ export const POST = async (req: Request) => {
   try {
     stripped = await stripVideoMetadataBuffer(buf, stripExt);
   } catch (e) {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     if (e instanceof StripVideoMetadataError && e.code === "FFMPEG_MISSING") {
       console.error("[blob-video-finalize] ffmpeg unavailable:", e.message);
       return jsonError(UPLOAD_SERVICE_UNAVAILABLE_ES, 503);
@@ -102,12 +98,12 @@ export const POST = async (req: Request) => {
   const sha = sha256HexFromBuffer(stripped);
   const stored = await lookupStoredMediaByHash(sha);
   if (stored === "blocked") {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return jsonError(UPLOAD_BLOCKED_MEDIA_ES, 403);
   }
   const dup = stored;
   if (dup?.kind === "UPLOADED_VIDEO") {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return NextResponse.json({
       kind: "UPLOADED_VIDEO" as const,
       mediaUrl: dup.mediaUrl,
@@ -131,10 +127,10 @@ export const POST = async (req: Request) => {
     });
   } catch {
     if (saved) await discardSavedR2Upload(saved);
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return jsonError("No se pudo guardar el video", 500);
   }
-  await completeBlobUpload(pathname, userId);
+  await deleteBlobOriginal(pathname);
   return NextResponse.json({
     kind: "UPLOADED_VIDEO" as const,
     mediaUrl: saved.mediaUrl,

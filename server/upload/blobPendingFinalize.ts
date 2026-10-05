@@ -4,6 +4,7 @@ import { r2PublicUrlForKey } from "@/lib/media/publicStorage";
 import { deleteR2ObjectByKey } from "@/server/storage/r2Storage";
 import { HOUR_MS } from "@/lib/time";
 
+/** Outlives the signed PUT URL (15 min), so the prune also removes objects re-uploaded after a finalize. */
 const TTL_MS = HOUR_MS;
 const PRUNE_BATCH_MAX = 50;
 
@@ -51,40 +52,26 @@ export const registerBlobFinalizeSlot = async (pathname: string, userId: string)
   });
 };
 
-export const verifyBlobFinalizeAuthorization = async (
-  pathname: string,
-  userId: string,
-): Promise<boolean> => {
-  await pruneExpiredBlobPendingFinalizes();
-  const row = await prisma.blobPendingPutFinalize.findUnique({
-    where: { pathname },
-  });
-  return Boolean(row && row.userId === userId && row.expiresAt.getTime() >= Date.now());
-};
-
-export const releaseBlobFinalizeSlot = async (pathname: string, userId: string): Promise<void> => {
-  await prisma.blobPendingPutFinalize.deleteMany({
-    where: { pathname, userId },
-  });
-};
-
 /**
- * Successful finalize: the result lives under another key and the original is no longer needed.
- * If deleting it fails the slot stays and the prune retries. Never throws.
+ * Atomic: of two concurrent finalizes for the same upload only one wins. The row stays, marked
+ * consumed, until it expires.
  */
-export const completeBlobUpload = async (pathname: string, userId: string): Promise<void> => {
+export const claimBlobFinalizeSlot = async (pathname: string, userId: string): Promise<boolean> => {
+  await pruneExpiredBlobPendingFinalizes();
+  const now = new Date();
+  const { count } = await prisma.blobPendingPutFinalize.updateMany({
+    where: { pathname, userId, consumedAt: null, expiresAt: { gt: now } },
+    data: { consumedAt: now },
+  });
+  return count === 1;
+};
+
+/** Deletes the uploaded original once the finalize ends, whatever the outcome. Never throws. */
+export const deleteBlobOriginal = async (pathname: string): Promise<void> => {
+  if (!isR2StorageFullyConfigured()) return;
   try {
-    if (isR2StorageFullyConfigured()) await deleteR2ObjectByKey(pathname);
-    await releaseBlobFinalizeSlot(pathname, userId);
+    await deleteR2ObjectByKey(pathname);
   } catch (e) {
     console.error("[blob-finalize] could not delete the original upload:", e);
   }
-};
-
-/** Rejected or deduplicated finalize: the uploaded object is deleted and the slot released. */
-export const discardBlobUpload = async (pathname: string, userId: string): Promise<void> => {
-  await Promise.allSettled([
-    isR2StorageFullyConfigured() ? deleteR2ObjectByKey(pathname) : Promise.resolve(),
-    releaseBlobFinalizeSlot(pathname, userId),
-  ]);
 };

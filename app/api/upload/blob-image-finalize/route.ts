@@ -15,11 +15,7 @@ import { sha256HexFromBuffer } from "@/server/media/sha256Hex";
 import { lookupStoredMediaByHash, recordStoredMediaByHash } from "@/server/media/storedMediaByHash";
 import { UPLOAD_BLOCKED_MEDIA_ES } from "@/lib/media/uploadBlockedMedia";
 import { type R2ObjectReadResult, readR2ObjectBuffer } from "@/server/storage/r2Storage";
-import {
-  completeBlobUpload,
-  discardBlobUpload,
-  verifyBlobFinalizeAuthorization,
-} from "@/server/upload/blobPendingFinalize";
+import { claimBlobFinalizeSlot, deleteBlobOriginal } from "@/server/upload/blobPendingFinalize";
 import { guardUploadRequest } from "@/server/upload/guard";
 
 export const runtime = "nodejs";
@@ -49,7 +45,7 @@ export const POST = async (req: Request) => {
   if (!pathname) {
     return jsonError("URL de imagen no permitida", 400);
   }
-  const authorized = await verifyBlobFinalizeAuthorization(pathname, userId);
+  const authorized = await claimBlobFinalizeSlot(pathname, userId);
   if (!authorized) {
     return jsonError("No tenés permiso para finalizar esta subida.", 403);
   }
@@ -57,11 +53,11 @@ export const POST = async (req: Request) => {
   try {
     read = await readR2ObjectBuffer(pathname, UPLOAD_MAX_IMAGE_BYTES);
   } catch {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return jsonError("No se pudo leer la imagen subida", 502);
   }
   if (!read.ok) {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return read.reason === "too_large"
       ? jsonError("La imagen es demasiado grande", 413)
       : jsonError("No se pudo leer la imagen subida", 502);
@@ -70,12 +66,12 @@ export const POST = async (req: Request) => {
   const sha = sha256HexFromBuffer(buf);
   const stored = await lookupStoredMediaByHash(sha);
   if (stored === "blocked") {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return jsonError(UPLOAD_BLOCKED_MEDIA_ES, 403);
   }
   const dup = stored;
   if (dup?.kind === "IMAGE" || dup?.kind === "ANIMATION") {
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     return NextResponse.json({
       kind: "IMAGE" as const,
       mediaUrl: dup.mediaUrl,
@@ -99,13 +95,13 @@ export const POST = async (req: Request) => {
     });
   } catch (e) {
     if (saved) await discardSavedR2Upload(saved);
-    await discardBlobUpload(pathname, userId);
+    await deleteBlobOriginal(pathname);
     if (e instanceof ImageDimensionLimitError) {
       return jsonError(uploadImageLimitMessageEs(e.reason), 413);
     }
     return jsonError("No se pudo procesar la imagen", 500);
   }
-  await completeBlobUpload(pathname, userId);
+  await deleteBlobOriginal(pathname);
   return NextResponse.json({
     kind: "IMAGE" as const,
     mediaUrl: saved.mediaUrl,

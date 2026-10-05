@@ -51,4 +51,10 @@ describe("isPublicIpAddress", () => {
     expect(isPublicIpAddress("::ffff:8.8.8.8")).toBe(true);
     expect(isPublicIpAddress("not-an-ip")).toBe(false);
   });
+
+  it("rejects Teredo and 6to4 addresses, which embed an IPv4 address", () => {
+    expect(isPublicIpAddress("2001:0:4136:e378:8000:63bf:3fff:fdd2")).toBe(false);
+    expect(isPublicIpAddress("2002:c0a8:101::1")).toBe(false);
+    expect(isPublicIpAddress("2001:4860:4860::8888")).toBe(true);
+  });
 });
