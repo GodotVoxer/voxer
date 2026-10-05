@@ -1,10 +1,12 @@
 import { z } from "zod";
 import {
   COMMENT_BODY_MAX,
+  COMMENT_BODY_MAX_LINES,
   COMMENT_LIST_PAGE_MAX,
   COMMENT_MEDIA_URL_MAX,
   VOX_YOUTUBE_URL_MAX,
 } from "@/lib/limits";
+import { commentBodyLineCount } from "@/lib/comments/normalizeCommentBody";
 
 export const createCommentSchema = z
   .object({
@@ -24,6 +26,13 @@ export const createCommentSchema = z
     pollDisclosureOptionId: z.string().min(1).optional().nullable(),
   })
   .superRefine((val, ctx) => {
+    if (commentBodyLineCount(val.body) > COMMENT_BODY_MAX_LINES) {
+      ctx.addIssue({
+        code: "custom",
+        message: `El comentario tiene demasiados saltos de línea (máximo ${COMMENT_BODY_MAX_LINES} líneas)`,
+        path: ["body"],
+      });
+    }
     const img = val.imageUrl?.trim();
     const vid = val.videoUrl?.trim();
     const yt = val.youtubeUrl?.trim();

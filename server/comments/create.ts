@@ -4,6 +4,7 @@ import { prisma } from "@/server/db/prisma";
 import { createUniquePublicTag } from "@/server/comments/publicTag";
 import { pickAvatarVariant } from "@/server/comments/avatarVariant";
 import { sanitizePlainText } from "@/lib/format/plainText";
+import { normalizeCommentBody } from "@/lib/comments/normalizeCommentBody";
 import { broadcastVoxActivity, emitToUserRoom, emitToVoxRoom } from "@/server/realtime/broadcast";
 import { countActiveCommentsForVox } from "@/server/vox/list";
 import {
@@ -73,7 +74,7 @@ export const createCommentOnVox = async (
     clientIpRaw: string;
   },
 ): Promise<CreateCommentResult> => {
-  const text = sanitizePlainText(parsed.body, COMMENT_BODY_MAX);
+  const text = normalizeCommentBody(sanitizePlainText(parsed.body, COMMENT_BODY_MAX));
   const mediaResolved = resolveCommentMediaForCreate({
     imageUrl: parsed.imageUrl,
     videoUrl: parsed.videoUrl,

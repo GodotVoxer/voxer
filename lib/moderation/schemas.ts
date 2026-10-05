@@ -2,11 +2,13 @@ import { ReportReason } from "@prisma/client";
 import { z } from "zod";
 import {
   COMMENT_BODY_MAX,
+  COMMENT_BODY_MAX_LINES,
   REPORT_DETAILS_MAX,
   USERNAME_MAX,
   VOX_DESCRIPTION_MAX,
   VOX_TITLE_MAX,
 } from "@/lib/limits";
+import { commentBodyLineCount } from "@/lib/comments/normalizeCommentBody";
 import { banContentWindowMaxAmountForUnit } from "@/lib/moderation/contentBan";
 import { voxCategorySchema } from "@/lib/vox/schemas";
 
@@ -67,7 +69,16 @@ export const moderationEditCommentSchema = z
     showStaffIdentity: z.boolean(),
     showOpIdentity: z.boolean(),
   })
-  .strict();
+  .strict()
+  .superRefine((val, ctx) => {
+    if (commentBodyLineCount(val.body) > COMMENT_BODY_MAX_LINES) {
+      ctx.addIssue({
+        code: "custom",
+        message: `El comentario tiene demasiados saltos de línea (máximo ${COMMENT_BODY_MAX_LINES} líneas)`,
+        path: ["body"],
+      });
+    }
+  });
 
 export const moderationEditVoxSchema = z.object({
   title: z

@@ -31,6 +31,7 @@ Cómo protege Voxer a sus usuarios, y las invariantes que cualquier cambio tiene
 - Los archivos subidos siempre se recodifican o se limpian de metadatos, y si algo falla se rechazan; ffmpeg corre con un demuxer fijo, protocolos limitados a `file`, un chequeo del contenedor y un límite de tiempo; la decodificación de imágenes está acotada contra las bombas de descompresión. Ver [multimedia](media-pipeline.md).
 - Las subidas directas caen en `incoming/`, que el dominio público del almacenamiento no debe servir, y solo el servidor publica la copia procesada en `uploads/`.
 - Un vox o un comentario solo puede referenciar URLs de subidas propias o YouTube. Los embeds de YouTube usan `youtube-nocookie.com` con un `sandbox` restringido.
+- El cuerpo de un comentario se guarda como texto plano (React lo escapa al renderizar) y se normaliza antes de guardarlo: se colapsan las corridas de líneas en blanco y se rechaza arriba de `COMMENT_BODY_MAX_LINES` líneas, contra el spam vertical de saltos de línea.
 - Un admin puede bloquear para siempre el hash de un archivo.
 
 ## Tiempo real

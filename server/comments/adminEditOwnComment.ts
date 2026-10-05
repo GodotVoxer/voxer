@@ -2,6 +2,7 @@ import type { CommentStaffBadge, Prisma, UserRole } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { broadcastCommentUpdated } from "@/server/realtime/broadcast";
 import { sanitizePlainText } from "@/lib/format/plainText";
+import { normalizeCommentBody } from "@/lib/comments/normalizeCommentBody";
 import { COMMENT_BODY_MAX } from "@/lib/limits";
 import {
   extractDistinctReplyTagsInOrder,
@@ -59,7 +60,7 @@ export const editOwnCommentByAdmin = async (
     return { ok: false, kind: "not_owner" };
   }
 
-  const body = sanitizePlainText(input.body, COMMENT_BODY_MAX);
+  const body = normalizeCommentBody(sanitizePlainText(input.body, COMMENT_BODY_MAX));
   // Same rule as creating: an empty body needs media or a disclosed poll vote.
   if (!body && !existing.imageUrl && !existing.videoUrl && !existing.pollDisclosureOptionId) {
     return { ok: false, kind: "empty" };
