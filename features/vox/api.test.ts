@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { api } from "@/features/http/apiClient";
+import { HOME_FEED_PRELOAD_HREF } from "@/lib/vox/homeFeedPreload";
+import { VOX_LIST_PAGE_SIZE } from "@/lib/limits";
 import { getVoxListPage, getVoxPollById, toggleModerationVoxPin } from "./api";
 
 describe("getVoxListPage", () => {
@@ -14,6 +16,21 @@ describe("getVoxListPage", () => {
     expect(spy).toHaveBeenCalledWith("/vox", {
       params: { cursor: undefined, limit: 24 },
     });
+  });
+  it("requests the home's first page at the URL the page preloads", async () => {
+    const spy = vi.spyOn(api, "get").mockResolvedValue({
+      data: { items: [], nextCursor: null, hasMore: false },
+    });
+    // Same arguments as the store's `fetchInitialPage` for the unfiltered home.
+    await getVoxListPage({
+      view: "default",
+      cursor: null,
+      limit: VOX_LIST_PAGE_SIZE,
+      categoryCode: null,
+      searchQuery: null,
+    });
+    const [url, config] = spy.mock.calls[0]!;
+    expect(api.getUri({ url, ...config })).toBe(HOME_FEED_PRELOAD_HREF);
   });
   it("requests hidden vox with view=hidden", async () => {
     const spy = vi.spyOn(api, "get").mockResolvedValue({
