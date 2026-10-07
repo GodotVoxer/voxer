@@ -2,6 +2,7 @@ package pro.voxer.app.web
 
 import android.webkit.JavascriptInterface
 import org.json.JSONObject
+import pro.voxer.app.push.VoxNotificationCleanup
 
 /** What the Activity must answer for the bridge. */
 interface BridgeHost {
@@ -15,6 +16,7 @@ interface BridgeHost {
     fun setThemeColors(resolvedMode: String, surfaceHex: String)
     fun setGestureLock(locked: Boolean)
     fun shareSitePath(path: String, title: String?)
+    fun clearVoxNotifications(voxId: String)
 }
 
 /**
@@ -67,6 +69,12 @@ class VoxerJsBridge(private val host: BridgeHost) {
     @JavascriptInterface
     fun share(path: String, title: String?) {
         host.shareSitePath(path, title?.take(SHARE_TITLE_MAX))
+    }
+
+    /** Only removes this app's own rows for that vox. */
+    @JavascriptInterface
+    fun clearVoxNotifications(voxId: String) {
+        if (VoxNotificationCleanup.VOX_ID.matches(voxId)) host.clearVoxNotifications(voxId)
     }
 
     companion object {

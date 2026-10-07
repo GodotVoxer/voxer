@@ -1,0 +1,1 @@
+- Al abrir un vox en la app se borran sus notificaciones del sistema.

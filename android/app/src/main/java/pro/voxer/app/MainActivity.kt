@@ -30,6 +30,7 @@ import androidx.core.view.updatePadding
 import pro.voxer.app.databinding.ActivityMainBinding
 import pro.voxer.app.push.DeepLinkResolver
 import pro.voxer.app.push.FlavorPush
+import pro.voxer.app.push.PushNotifier
 import pro.voxer.app.push.PushTokenStore
 import pro.voxer.app.web.BridgeHost
 import pro.voxer.app.web.DownloadController
@@ -421,6 +422,8 @@ class MainActivity : ComponentActivity(), WebViewHost, BridgeHost {
             androidx.core.app.NotificationManagerCompat.from(this).cancelAll()
         }
     }
+
+    override fun clearVoxNotifications(voxId: String) = PushNotifier.cancelForVox(this, voxId)
 
     override fun setThemeColors(resolvedMode: String, surfaceHex: String) {
         val color = runCatching { Color.parseColor(surfaceHex) }.getOrNull() ?: return

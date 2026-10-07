@@ -9,6 +9,7 @@ import { isAdminRole, isStaffRole } from "@/lib/moderation/roles";
 import { useCommentThreadPopups } from "@/hooks/comments/useCommentThreadPopups";
 import { useMarkVoxNotificationsRead } from "@/hooks/notifications/useMarkVoxNotificationsRead";
 import { useMarkVoxModerationNotificationsRead } from "@/hooks/notifications/useMarkVoxModerationNotificationsRead";
+import { useClearNativeVoxNotifications } from "@/hooks/notifications/useClearNativeVoxNotifications";
 import { useVoxCommentsRealtime } from "@/hooks/vox/useVoxCommentsRealtime";
 import { useVoxCommentHashDeepLink } from "@/hooks/vox/useVoxCommentHashDeepLink";
 import { useVoxCommentHighlightDismiss } from "@/hooks/vox/useVoxCommentHighlightDismiss";
@@ -60,6 +61,7 @@ export const VoxDetailView = ({
 
   useMarkVoxNotificationsRead(id);
   useMarkVoxModerationNotificationsRead(id, markModerationNotificationsRead);
+  useClearNativeVoxNotifications(id);
 
   const mod = useVoxDetailModeration({
     voxId: id,

@@ -25,11 +25,15 @@ data class PushPayload(
     val group: String get() = if (kind == "report") GROUP_REPORTS else channelId
     val summaryId: Int get() = "summary:$group".hashCode()
 
+    /** Stored on the row so the page can clear it once that vox is open (`VoxNotificationCleanup`). */
+    val voxId: String? get() = VOX_PATH_RE.find(path)?.groupValues?.get(1)
+
     companion object {
         const val SUPPORTED_VERSION = "1"
         const val GROUP_REPORTS = "reports"
 
         private val COLLAPSE_KEY_RE = Regex("^[a-z]+:vox:[A-Za-z0-9_-]{1,64}$")
+        private val VOX_PATH_RE = Regex("^/vox/([A-Za-z0-9_-]{1,64})(?:[?#]|$)")
 
         fun parse(data: Map<String, String>): PushPayload? {
             if (data["v"] != SUPPORTED_VERSION) return null

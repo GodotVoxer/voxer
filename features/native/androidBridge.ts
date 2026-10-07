@@ -87,6 +87,21 @@ export const readAndroidPushVapidBridge = (win: unknown): AndroidPushVapidBridge
   return candidate as AndroidPushVapidBridge;
 };
 
+/** Optional: apps before 1.1.1 do not clear a vox's system notifications. */
+export type AndroidVoxNotificationsBridge = {
+  clearVoxNotifications(voxId: string): void;
+};
+
+export const readAndroidVoxNotificationsBridge = (
+  win: unknown,
+): AndroidVoxNotificationsBridge | null => {
+  if (typeof win !== "object" || win === null) return null;
+  const candidate = (win as NativeWindow).VoxerAndroid;
+  if (typeof candidate !== "object" || candidate === null) return null;
+  if (!isFn((candidate as Record<string, unknown>).clearVoxNotifications)) return null;
+  return candidate as AndroidVoxNotificationsBridge;
+};
+
 /** The bridge returns JSON as a string: never trust its shape. */
 export const parseNativeAppInfo = (raw: string): NativeAppInfo | null => {
   try {

@@ -41,6 +41,8 @@ Los comentarios del mismo vox comparten una sola fila de notificación por canal
 
 La app guarda su token y la página lo registra con `POST /api/push/devices` (ver el [README de Android](../android/README.md)). El token se registra solo después de que el usuario acepta el permiso de notificaciones.
 
+Cuando un vox se abre dentro de la app, la página le pide que borre las notificaciones de ese vox (`clearVoxNotifications`, desde `hooks/notifications/useClearNativeVoxNotifications.ts`), junto con el resumen del grupo si queda vacío. Lo vuelve a pedir si llega un push con el vox abierto o al volver a la app. Cada fila guarda el id del vox; las que mostraron versiones anteriores a la 1.1.1 se reconocen por su `collapseKey`, salvo las de denuncias, que se van recién cuando el contador llega a cero.
+
 ## Configuración
 
 `PUSH_ENABLED=true`, más la cuenta de servicio de Firebase (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`) para la versión `gms` de Android y/o el par VAPID (`NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY`, `WEB_PUSH_VAPID_SUBJECT`) para escritorio y UnifiedPush. Solo el servidor contacta a los servicios de push, así que la CSP no necesita cambios.

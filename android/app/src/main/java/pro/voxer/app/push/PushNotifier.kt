@@ -1,5 +1,6 @@
 package pro.voxer.app.push
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -52,7 +53,12 @@ object PushNotifier {
             .setContentTitle(payload.title)
             .setContentText(payload.body)
             .setNumber(count)
-            .addExtras(Bundle().apply { putInt(EXTRA_COUNT, count) })
+            .addExtras(
+                Bundle().apply {
+                    putInt(EXTRA_COUNT, count)
+                    putString(EXTRA_VOX_ID, payload.voxId)
+                },
+            )
             .setCategory(
                 if (payload.kind == "report") {
                     NotificationCompat.CATEGORY_STATUS
@@ -100,6 +106,20 @@ object PushNotifier {
         }
     }
 
+    /** Removes the rows of a vox the user already opened in the app, as any messaging app does. */
+    fun cancelForVox(context: Context, voxId: String) {
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return
+        val shown = manager.activeNotifications.map { sbn ->
+            ShownNotification(
+                id = sbn.id,
+                group = sbn.notification.group,
+                isSummary = sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0,
+                voxId = sbn.notification.extras.getString(EXTRA_VOX_ID),
+            )
+        }
+        VoxNotificationCleanup.idsToCancel(shown, voxId).forEach(manager::cancel)
+    }
+
     /** Comments already counted in the vox row; 0 if the user dismissed it. */
     private fun activeCount(context: Context, id: Int): Int {
         val active = context.getSystemService(NotificationManager::class.java)
@@ -110,4 +130,5 @@ object PushNotifier {
     }
 
     private const val EXTRA_COUNT = "pro.voxer.app.push.COUNT"
+    private const val EXTRA_VOX_ID = "pro.voxer.app.push.VOX_ID"
 }

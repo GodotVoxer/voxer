@@ -40,6 +40,14 @@ class PushPayloadTest {
     }
 
     @Test
+    fun `takes the vox id from the path`() {
+        assertEquals("abc", PushPayload.parse(valid())!!.voxId)
+        assertEquals("abc", PushPayload.parse(valid("path" to "/vox/abc?denuncia=push#AB12"))!!.voxId)
+        assertEquals("abc", PushPayload.parse(valid("path" to "/vox/abc"))!!.voxId)
+        assertNull(PushPayload.parse(valid("path" to "/favoritos"))!!.voxId)
+    }
+
+    @Test
     fun `ignores a future contract version`() {
         assertNull(PushPayload.parse(valid("v" to "2")))
         assertNull(PushPayload.parse(valid("v" to "")))

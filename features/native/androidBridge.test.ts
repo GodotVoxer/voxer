@@ -5,6 +5,7 @@ import {
   readAndroidBridge,
   parseUnifiedPushRegistration,
   readAndroidPushVapidBridge,
+  readAndroidVoxNotificationsBridge,
   readNativeAppInfo,
 } from "@/features/native/androidBridge";
 
@@ -139,6 +140,18 @@ describe("readAndroidPushVapidBridge", () => {
         VoxerAndroid: fullBridge({ setPushVapidKey: () => undefined }),
       }),
     ).not.toBeNull();
+  });
+});
+
+describe("readAndroidVoxNotificationsBridge", () => {
+  it("is only available in apps that can clear a vox's notifications", () => {
+    expect(readAndroidVoxNotificationsBridge({ VoxerAndroid: fullBridge() })).toBeNull();
+    expect(
+      readAndroidVoxNotificationsBridge({
+        VoxerAndroid: fullBridge({ clearVoxNotifications: () => undefined }),
+      }),
+    ).not.toBeNull();
+    expect(readAndroidVoxNotificationsBridge({})).toBeNull();
   });
 });
 

@@ -69,7 +69,7 @@ Sin `VOXER_KEYSTORE_FILE` la variante release se compila sin firmar y no se pued
 | --------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `push/PushPayload.kt`                   | `server/push/payload.ts` (campo `v`, hoy `"1"`); UnifiedPush recibe el mismo mapa en JSON |
 | `push/DeepLinkResolver.kt`              | `lib/notifications/links.ts`                                                               |
-| `web/VoxerJsBridge.kt`                  | `features/native/androidBridge.ts`, `hooks/device/useNativePushRegistration.ts`            |
+| `web/VoxerJsBridge.kt`                  | `features/native/androidBridge.ts`, `hooks/device/useNativePushRegistration.ts`, `hooks/notifications/useClearNativeVoxNotifications.ts` |
 | `res/values/colors.xml`                 | `lib/theme/nativeSplashColor.ts` (lo fija su test)                                         |
 | Intent filter de `AndroidManifest.xml`  | `app/.well-known/assetlinks.json/route.ts`                                                 |
 
@@ -77,7 +77,7 @@ Sin `VOXER_KEYSTORE_FILE` la variante release se compila sin firmar y no se pued
 
 La página, y no Kotlin, registra el token en el servidor: el pedido sale del WebView con su propio `Origin`, pasa el control de origen de la API sin falsificar cabeceras, y la cookie de sesión `httpOnly` nunca sale del WebView.
 
-El puente es chico a propósito. La CSP del sitio permite scripts en línea, así que un XSS llegaría a él: ningún método toca el sistema de archivos, abre intents arbitrarios ni devuelve la sesión. `share` recibe un path del sitio y la app arma la URL.
+El puente es chico a propósito. La CSP del sitio permite scripts en línea, así que un XSS llegaría a él: ningún método toca el sistema de archivos, abre intents arbitrarios ni devuelve la sesión. `share` recibe un path del sitio y la app arma la URL. `clearVoxNotifications` solo acepta un id de vox y solo borra notificaciones de la propia app.
 
 ## Trampas
 
