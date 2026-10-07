@@ -88,7 +88,7 @@ export const CommentRow = ({
         pinnedCopy
           ? "border border-comment-pin/60 bg-comment-pin-soft/[0.06] shadow-[0_0_10px_color-mix(in_srgb,var(--comment-pin-soft)_10%,transparent)]"
           : "border-b border-fg/5",
-        highlighted && "bg-fg/[0.08]",
+        highlighted && "bg-brand-500/[0.09] ring-1 ring-inset ring-brand-500/30",
         !highlighted && !pinnedCopy && comment.isMine && "bg-fg/[0.04]",
       )}
     >

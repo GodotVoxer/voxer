@@ -30,9 +30,9 @@ const PanelRowLink = ({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-md border p-2 transition-colors ${
+      className={`relative flex items-center gap-2 overflow-hidden rounded-md border p-2 transition-colors ${
         row.readAt == null
-          ? "border-warning-900/30 bg-surface-elevated/55 hover:bg-surface-elevated/80"
+          ? "border-brand-500/30 bg-brand-500/[0.08] before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-brand-500/70 hover:bg-brand-500/[0.12]"
           : "border-fg/10 bg-surface-sunken/80 hover:bg-surface-raised"
       }`}
     >
