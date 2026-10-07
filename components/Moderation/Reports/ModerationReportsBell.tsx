@@ -21,6 +21,7 @@ import { useNotificationPanelCacheStore } from "@/features/notifications/panelCa
 import { mapStaffNotificationsToVirtualRows } from "@/features/notifications/panelVirtualListRow";
 import { NotificationPanelVirtualList } from "@/components/Notifications/NotificationPanelVirtualList";
 import { useVoxPanelBellList } from "@/hooks/notifications/useVoxPanelBellList";
+import { sortUnreadFirst } from "@/features/notifications/sortUnreadFirst";
 import { isStaffRole } from "@/lib/moderation/roles";
 
 export const ModerationReportsBell = () => {
@@ -51,7 +52,10 @@ export const ModerationReportsBell = () => {
       refresh,
     });
 
-  const virtualRows = useMemo(() => mapStaffNotificationsToVirtualRows(items), [items]);
+  const virtualRows = useMemo(
+    () => mapStaffNotificationsToVirtualRows(sortUnreadFirst(items)),
+    [items],
+  );
 
   if (!user || !isStaffRole(user.role)) return null;
   const n = user.unreadModerationNotifications;
