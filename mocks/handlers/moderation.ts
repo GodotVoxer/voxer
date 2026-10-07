@@ -11,7 +11,7 @@ export const moderationHandlers = [
           readAt: null,
           voxId: "1",
           message: "Denuncia en: ¿Cuál es el mejor lenguaje para sistemas?",
-          thumbnailUrl: voxList[0]?.thumbnailUrl ?? null,
+          thumbnailUrl: null,
           commentHash: null,
           reportDetails: "Contenido ofensivo y spam repetido en el hilo.",
           createdAt: new Date().toISOString(),

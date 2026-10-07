@@ -45,4 +45,4 @@ Un admin puede editar el título y la descripción de sus propios vox (`PATCH /a
 
 ## Denuncias
 
-Los usuarios denuncian vox y comentarios. Las denuncias se deduplican por denunciante, publicación y motivo, le avisan al staff por su propia campana y su propio canal de push, y llevan directo al contenido denunciado. Como en las notificaciones, el panel muestra primero las no vistas y, dentro de cada grupo, las más nuevas arriba. Las miniaturas se ven borrosas hasta que se tocan, porque pueden ser justamente el contenido denunciado.
+Los usuarios denuncian vox y comentarios. Las denuncias se deduplican por denunciante, publicación y motivo, le avisan al staff por su propia campana y su propio canal de push, y llevan directo al contenido denunciado. Como en las notificaciones, el panel muestra primero las no vistas y, dentro de cada grupo, las más nuevas arriba.
