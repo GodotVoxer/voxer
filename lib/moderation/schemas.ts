@@ -33,10 +33,14 @@ export const moderationBanSchema = z.object({
   blockClientNetwork: z.boolean().optional().default(false),
 });
 
+/** `block` is ADMIN only; the route enforces it. */
+const bulkContentMediaSchema = z.enum(["keep", "purge", "block"]).optional().default("keep");
+
 const moderationBanContentRelativeSchema = z
   .object({
     targetUserId: z.string().min(1),
     forever: z.literal(false),
+    media: bulkContentMediaSchema,
     amount: z.coerce.number().int().positive(),
     unit: z.enum(["MINUTES", "HOURS", "DAYS"]),
   })
@@ -55,6 +59,7 @@ export const moderationBanContentSchema = z.union([
   z.object({
     targetUserId: z.string().min(1),
     forever: z.literal(true),
+    media: bulkContentMediaSchema,
   }),
   moderationBanContentRelativeSchema,
 ]);

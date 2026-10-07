@@ -72,7 +72,13 @@ export const moderationActionPayloadSummary = (row: ModerationActionRow): string
           : typeof data.window === "string"
             ? data.window
             : "—";
-    return `vox: ${voxCount}, comentarios: ${commentCount}, ${windowLabel}`;
+    const media =
+      data.media === "block"
+        ? ", archivos borrados y bloqueados"
+        : data.media === "purge"
+          ? ", archivos borrados"
+          : "";
+    return `vox: ${voxCount}, comentarios: ${commentCount}, ${windowLabel}${media}`;
   }
   return "—";
 };

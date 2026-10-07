@@ -1,4 +1,4 @@
-import { countDuration } from "@/lib/format/plural";
+import { countDuration, countNoun } from "@/lib/format/plural";
 import { DAY_MS, type DurationUnit } from "@/lib/time";
 import { SOFT_DELETE_GRACE_MS } from "@/lib/moderation/constants";
 
@@ -7,6 +7,9 @@ export type PublicationFate = "keep" | "delete" | "purge" | "block";
 
 /** The author's other publications deleted along with the ban. */
 export type BanContentScope = "none" | "window" | "all";
+
+/** The files of those publications, hidden ones included. `block` is ADMIN only. */
+export type BanContentMedia = "keep" | "purge" | "block";
 
 export type AuthorBanDraft = {
   reason: string;
@@ -18,6 +21,9 @@ export type AuthorBanDraft = {
   contentScope: BanContentScope;
   contentAmount: string;
   contentUnit: DurationUnit;
+  contentMedia: BanContentMedia;
+  /** Deleting a whole history of files cannot be undone, so it takes an explicit confirmation. */
+  contentMediaConfirmed: boolean;
 };
 
 export type PublicationModerationPlan = {
@@ -36,6 +42,42 @@ export const DEFAULT_AUTHOR_BAN_DRAFT: AuthorBanDraft = {
   contentScope: "none",
   contentAmount: "10",
   contentUnit: "MINUTES",
+  contentMedia: "keep",
+  contentMediaConfirmed: false,
+};
+
+/** Everything at once, for content that must never come back (gore, child abuse). */
+export const illegalContentPreset = (
+  draft: AuthorBanDraft,
+  canBlock: boolean,
+): { fate: PublicationFate; ban: AuthorBanDraft } => ({
+  fate: canBlock ? "block" : "purge",
+  ban: {
+    ...draft,
+    reason: draft.reason.trim() ? draft.reason : "Contenido ilegal.",
+    permanent: true,
+    blockNetwork: true,
+    contentScope: "all",
+    contentMedia: canBlock ? "block" : "purge",
+    contentMediaConfirmed: false,
+  },
+});
+
+const bulkMediaPending = (ban: AuthorBanDraft | null): boolean =>
+  ban !== null && ban.contentScope !== "none" && ban.contentMedia !== "keep";
+
+export type BanContentWindow =
+  | { forever: true }
+  | { forever: false; amount: number; unit: DurationUnit };
+
+/** `null` when nothing else is deleted or the window is not a valid number yet. */
+export const banContentWindow = (
+  ban: Pick<AuthorBanDraft, "contentScope" | "contentAmount" | "contentUnit">,
+): BanContentWindow | null => {
+  if (ban.contentScope === "none") return null;
+  if (ban.contentScope === "all") return { forever: true };
+  const amount = parsePositiveInt(ban.contentAmount);
+  return amount === null ? null : { forever: false, amount, unit: ban.contentUnit };
 };
 
 export const fateDeletesPublication = (fate: PublicationFate): boolean => fate !== "keep";
@@ -111,6 +153,15 @@ const banLines = (ban: AuthorBanDraft): ModerationSummaryLine[] => {
       tone: "default",
     });
   }
+  if (bulkMediaPending(ban)) {
+    lines.push({
+      text:
+        ban.contentMedia === "block"
+          ? "También se borran y se bloquean los archivos de esas publicaciones, incluidas las que ya estaban ocultas: nadie va a poder volver a subirlos. No se puede deshacer."
+          : "También se borran los archivos de esas publicaciones, incluidas las que ya estaban ocultas. No se pueden recuperar.",
+      tone: "danger",
+    });
+  }
   return lines;
 };
 
@@ -141,6 +192,9 @@ export const publicationModerationProblem = (plan: PublicationModerationPlan): s
   if (plan.ban.contentScope === "window" && parsePositiveInt(plan.ban.contentAmount) === null) {
     return "La ventana de publicaciones a borrar debe ser un número entero mayor a cero.";
   }
+  if (bulkMediaPending(plan.ban) && !plan.ban.contentMediaConfirmed) {
+    return "Confirmá que revisaste al autor: borrar todos sus archivos no se puede deshacer.";
+  }
   return null;
 };
 
@@ -150,4 +204,19 @@ export const publicationModerationConfirmLabel = (plan: PublicationModerationPla
   if (plan.ban) return "Banear autor";
   if (deletes) return "Eliminar";
   return "Confirmar";
+};
+
+/** What the chosen window reaches, as the dialog shows it before confirming. */
+export const authorContentCountsLabel = (counts: {
+  voxCount: number;
+  commentCount: number;
+  mediaCount: number;
+}): string => {
+  const visible =
+    counts.voxCount + counts.commentCount === 0
+      ? "No tiene publicaciones visibles en ese período."
+      : `Alcanza ${countNoun(counts.voxCount, "vox", "vox")} y ${countNoun(counts.commentCount, "comentario", "comentarios")}.`;
+  if (counts.mediaCount === 0) return `${visible} Ninguna tiene archivos.`;
+  const media = countNoun(counts.mediaCount, "publicación tiene", "publicaciones tienen");
+  return `${visible} ${media} archivos, contando las ya ocultas.`;
 };

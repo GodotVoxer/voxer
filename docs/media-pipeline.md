@@ -36,7 +36,8 @@ Un admin puede bloquear un archivo al purgarlo: la fila se conserva con `blocked
 ## Limpieza
 
 - `cleanupManagedUploadUrlsIfUnreferenced` borra un archivo cuando ninguna fila de `Vox` ni de `Comment` lo referencia (contando las borradas con soft delete, así deshacer una acción de moderación recupera su multimedia). Un período de gracia de 24 h (`STORED_MEDIA_SWEEP_GRACE_MS`) protege los adjuntos de borradores que se subieron pero todavía no se publicaron.
-- Las purgas del staff (`/api/moderation/*/purge-media`) se saltean esa gracia, porque una purga existe justamente para bajar algo subido hace minutos, pero siguen respetando otras referencias al mismo archivo.
+- Las purgas del staff (`/api/moderation/*/purge-media` y el borrado en bloque con `media: "purge"` o `"block"`) se saltean esa gracia, porque una purga existe justamente para bajar algo subido hace minutos, pero siguen respetando otras referencias al mismo archivo. Un archivo que comparte otra publicación viva no se borra y, por lo tanto, tampoco se bloquea.
+- El dominio público del almacenamiento no debe cachear en el borde. Los archivos se sirven con `Cache-Control` inmutable, así que una copia en el CDN seguiría saliendo después de una purga. Sin caché en el borde, borrar el objeto lo baja al instante; solo lo conservan los navegadores que ya lo habían cargado.
 - `npm run storage:purge-orphans` hace un barrido completo a mano.
 
 ## Del lado del cliente

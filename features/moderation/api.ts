@@ -3,10 +3,11 @@ import { api } from "@/features/http/apiClient";
 import type { ModerationAuthorPublicationsPage } from "@/lib/moderation/authorPublicationsTypes";
 import type { StaffPublicationModTarget } from "@/features/moderation/types";
 import type { CommentPublic } from "@/lib/vox/types";
+import type { BanContentMedia, BanContentWindow } from "@/features/moderation/publicationPlan";
 
-export type ModerationBanContentBody =
-  | { forever: true }
-  | { forever: false; amount: number; unit: "MINUTES" | "HOURS" | "DAYS" };
+export type ModerationBanContentBody = BanContentWindow & { media?: BanContentMedia };
+
+export type AuthorContentCounts = { voxCount: number; commentCount: number; mediaCount: number };
 
 export const postReport = async (body: {
   voxId: string;
@@ -189,6 +190,20 @@ export const banUserContentAsModerator = async (
   body: ModerationBanContentBody,
 ): Promise<void> => {
   await api.post(`/moderation/users/${targetUserId}/ban-content`, body);
+};
+
+export const fetchAuthorContentCounts = async (
+  targetUserId: string,
+  window: BanContentWindow,
+  signal?: AbortSignal,
+): Promise<AuthorContentCounts> => {
+  const res = await api.get<AuthorContentCounts>(`/moderation/users/${targetUserId}/ban-content`, {
+    params: window.forever
+      ? { forever: "true" }
+      : { forever: "false", amount: window.amount, unit: window.unit },
+    signal,
+  });
+  return res.data;
 };
 
 export const fetchModerationAuthorPublications = async (opts: {

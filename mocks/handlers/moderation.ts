@@ -11,7 +11,7 @@ export const moderationHandlers = [
           readAt: null,
           voxId: "1",
           message: "Denuncia en: ¿Cuál es el mejor lenguaje para sistemas?",
-          thumbnailUrl: null,
+          thumbnailUrl: voxList[0]?.thumbnailUrl ?? null,
           commentHash: null,
           reportDetails: "Contenido ofensivo y spam repetido en el hilo.",
           createdAt: new Date().toISOString(),
@@ -93,6 +93,27 @@ export const moderationHandlers = [
       nextCursor: null as string | null,
     };
     return HttpResponse.json(body);
+  }),
+  http.post("/api/moderation/ban", () => {
+    return HttpResponse.json({ banId: "mock-ban", actionId: "mock-ban-action" });
+  }),
+  http.get("/api/moderation/users/:id/ban-content", ({ request }) => {
+    const forever = new URL(request.url).searchParams.get("forever") === "true";
+    return HttpResponse.json(
+      forever
+        ? { voxCount: 4, commentCount: 17, mediaCount: 6 }
+        : { voxCount: 1, commentCount: 3, mediaCount: 1 },
+    );
+  }),
+  http.post("/api/moderation/users/:id/ban-content", () => {
+    return HttpResponse.json({
+      ok: true,
+      actionId: "mock-bulk",
+      voxCount: 4,
+      commentCount: 17,
+      fileCount: 6,
+      blockedHashes: 0,
+    });
   }),
   http.patch(/\/api\/moderation\/users\/[^/]+\/role$/, () => {
     return HttpResponse.json({ ok: true });

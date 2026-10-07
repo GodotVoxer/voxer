@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  authorContentCountsLabel,
+  banContentWindow,
   DEFAULT_AUTHOR_BAN_DRAFT,
+  illegalContentPreset,
   publicationModerationConfirmLabel,
   publicationModerationProblem,
   publicationModerationSummary,
@@ -94,6 +97,100 @@ describe("publicationModerationConfirmLabel", () => {
     );
     expect(publicationModerationConfirmLabel({ kind: "vox", fate: "delete", ban })).toBe(
       "Eliminar y banear",
+    );
+  });
+});
+
+describe("bulk media", () => {
+  const withMedia = (b: Partial<AuthorBanDraft>): PublicationModerationPlan => ({
+    kind: "vox",
+    fate: "delete",
+    ban: { ...ban, contentScope: "all", ...b },
+  });
+
+  it("warns that the files of the whole history cannot be recovered", () => {
+    const keep = publicationModerationSummary(withMedia({ contentMedia: "keep" }));
+    expect(keep.some((l) => l.tone === "danger")).toBe(false);
+    const purge = publicationModerationSummary(withMedia({ contentMedia: "purge" })).at(-1);
+    expect(purge).toEqual({ text: expect.stringContaining("ya estaban ocultas"), tone: "danger" });
+    const block = publicationModerationSummary(withMedia({ contentMedia: "block" })).at(-1);
+    expect(block?.text).toContain("nadie va a poder volver a subirlos");
+  });
+
+  it("ignores the media choice when no other publication is deleted", () => {
+    const lines = publicationModerationSummary(
+      withMedia({ contentScope: "none", contentMedia: "block" }),
+    );
+    expect(lines.some((l) => l.tone === "danger")).toBe(false);
+    expect(
+      publicationModerationProblem(withMedia({ contentScope: "none", contentMedia: "block" })),
+    ).toBeNull();
+  });
+
+  it("requires an explicit confirmation before deleting the files", () => {
+    expect(publicationModerationProblem(withMedia({ contentMedia: "purge" }))).toMatch(/Confirmá/);
+    expect(
+      publicationModerationProblem(
+        withMedia({ contentMedia: "purge", contentMediaConfirmed: true }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("illegalContentPreset", () => {
+  it("marks everything, blocking only for admins, and still asks for confirmation", () => {
+    const admin = illegalContentPreset(DEFAULT_AUTHOR_BAN_DRAFT, true);
+    expect(admin.fate).toBe("block");
+    expect(admin.ban).toMatchObject({
+      reason: "Contenido ilegal.",
+      permanent: true,
+      blockNetwork: true,
+      contentScope: "all",
+      contentMedia: "block",
+      contentMediaConfirmed: false,
+    });
+    const mod = illegalContentPreset(DEFAULT_AUTHOR_BAN_DRAFT, false);
+    expect(mod.fate).toBe("purge");
+    expect(mod.ban.contentMedia).toBe("purge");
+  });
+
+  it("keeps a reason already written", () => {
+    const r = illegalContentPreset({ ...ban, reason: "gore" }, true);
+    expect(r.ban.reason).toBe("gore");
+  });
+
+  it("drops an earlier confirmation", () => {
+    const r = illegalContentPreset({ ...ban, contentMediaConfirmed: true }, true);
+    expect(r.ban.contentMediaConfirmed).toBe(false);
+  });
+});
+
+describe("banContentWindow", () => {
+  it("maps the scope to the request window", () => {
+    expect(banContentWindow({ ...ban, contentScope: "none" })).toBeNull();
+    expect(banContentWindow({ ...ban, contentScope: "all" })).toEqual({ forever: true });
+    expect(
+      banContentWindow({
+        ...ban,
+        contentScope: "window",
+        contentAmount: "2",
+        contentUnit: "HOURS",
+      }),
+    ).toEqual({ forever: false, amount: 2, unit: "HOURS" });
+    expect(banContentWindow({ ...ban, contentScope: "window", contentAmount: "" })).toBeNull();
+  });
+});
+
+describe("authorContentCountsLabel", () => {
+  it("counts visible publications and those with files", () => {
+    expect(authorContentCountsLabel({ voxCount: 1, commentCount: 3, mediaCount: 1 })).toBe(
+      "Alcanza 1 vox y 3 comentarios. 1 publicación tiene archivos, contando las ya ocultas.",
+    );
+    expect(authorContentCountsLabel({ voxCount: 0, commentCount: 0, mediaCount: 2 })).toBe(
+      "No tiene publicaciones visibles en ese período. 2 publicaciones tienen archivos, contando las ya ocultas.",
+    );
+    expect(authorContentCountsLabel({ voxCount: 2, commentCount: 1, mediaCount: 0 })).toBe(
+      "Alcanza 2 vox y 1 comentario. Ninguna tiene archivos.",
     );
   });
 });

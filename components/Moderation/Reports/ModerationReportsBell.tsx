@@ -88,7 +88,8 @@ export const ModerationReportsBell = () => {
             <DialogTitle>Denuncias</DialogTitle>
             <DialogDescription className="text-fg-muted">
               Reportes de usuarios. Tocá una fila para abrir el vox y marcar esas denuncias como
-              vistas; las del mismo vox se marcan juntas.
+              vistas; las del mismo vox se marcan juntas. Las miniaturas se ven borrosas hasta que
+              las tocás.
             </DialogDescription>
           </DialogHeader>
           <div
@@ -104,6 +105,7 @@ export const ModerationReportsBell = () => {
                 scrollParentRef={scrollParentRef}
                 items={virtualRows}
                 onNotificationActivate={onRowActivate}
+                blurThumbnails
               />
             )}
           </div>

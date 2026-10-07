@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -91,6 +91,24 @@ const PublicationModerationPanel = ({ target, onClose, onCompleted }: PanelProps
       </DialogHeader>
 
       <div className="grid gap-5 py-1">
+        <div className="grid gap-1 rounded-md border border-danger-900/50 bg-danger-950/20 p-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            className="cursor-pointer border-danger-800/60 bg-surface-raised text-danger-200 hover:bg-danger-950/50 hover:text-fg"
+            disabled={locked || form.owner.status === "loading"}
+            onClick={form.applyIllegalContentPreset}
+          >
+            <ShieldAlert className="mr-2 size-4" aria-hidden />
+            Contenido ilegal
+          </Button>
+          <p className="text-xs text-fg-muted">
+            Para gore o abuso infantil: marca todo junto (
+            {form.canBlockMedia ? "borrar y bloquear" : "borrar"} el archivo, ban permanente con la
+            red y todo su historial con sus archivos). Revisalo abajo antes de confirmar.
+          </p>
+        </div>
+
         <Section step={1} title="La publicación">
           <PublicationFatePicker
             kind={target.kind}
@@ -108,6 +126,8 @@ const PublicationModerationPanel = ({ target, onClose, onCompleted }: PanelProps
             onEnabledChange={form.toggleBan}
             draft={form.banDraft}
             onDraftChange={form.updateBanDraft}
+            contentCounts={form.contentCounts}
+            canBlockMedia={form.canBlockMedia}
             disabled={locked}
           />
         </Section>

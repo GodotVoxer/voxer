@@ -45,6 +45,20 @@ describe("moderationBanContentSchema", () => {
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.forever).toBe(true);
   });
+  it("keeps the files unless told otherwise", () => {
+    const r = moderationBanContentSchema.safeParse({ targetUserId: "u1", forever: true });
+    expect(r.success && r.data.media).toBe("keep");
+  });
+  it("accepts purging or blocking the files and rejects anything else", () => {
+    for (const media of ["purge", "block"]) {
+      const r = moderationBanContentSchema.safeParse({ targetUserId: "u1", forever: true, media });
+      expect(r.success && r.data.media).toBe(media);
+    }
+    expect(
+      moderationBanContentSchema.safeParse({ targetUserId: "u1", forever: true, media: "nuke" })
+        .success,
+    ).toBe(false);
+  });
   it("accepts a relative window", () => {
     const r = moderationBanContentSchema.safeParse({
       targetUserId: "u1",

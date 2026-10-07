@@ -17,47 +17,75 @@ import { banContentWindowDurationMs, banContentWindowLabelEs } from "@/lib/moder
 import { canModerateTarget } from "@/lib/moderation/roleGuards";
 import { resolveLatestClientIpHashForUser } from "@/server/moderation/resolveLatestClientIpHash";
 import { invalidateVoxDetailCache } from "@/server/vox/getVoxDetailCached";
+import {
+  authorCommentWhere,
+  authorVoxWhere,
+  bulkCutoffForBanContent,
+  countAuthorContent,
+  purgeAuthorPublicationMedia,
+  type AuthorContentCounts,
+  type BulkBanContentInput,
+  type BulkContentMedia,
+} from "@/server/moderation/authorContent";
 
-export type BulkBanContentInput =
-  | { kind: "forever" }
-  | { kind: "relative"; amount: number; unit: DurationUnit };
+export type { BulkBanContentInput, BulkContentMedia };
 
-const bulkCutoffForBanContent = (contentBan: BulkBanContentInput): Date | null => {
-  if (contentBan.kind === "forever") return null;
-  return new Date(Date.now() - banContentWindowDurationMs(contentBan.amount, contentBan.unit));
+const bulkContentTargetDenied = async (
+  actorUserId: string,
+  targetUserId: string,
+): Promise<"not_found" | "forbidden_target" | null> => {
+  const [actor, target] = await Promise.all([
+    prisma.user.findUnique({ where: { id: actorUserId }, select: { role: true } }),
+    prisma.user.findUnique({ where: { id: targetUserId }, select: { role: true } }),
+  ]);
+  if (!target) return "not_found";
+  if (!actor || !canModerateTarget(actor.role, target.role, actorUserId === targetUserId)) {
+    return "forbidden_target";
+  }
+  return null;
+};
+
+/** What a bulk delete with this window would reach, so staff sees it before confirming. */
+export const previewBulkBanUserContent = async (
+  actorUserId: string,
+  targetUserId: string,
+  contentBan: BulkBanContentInput,
+): Promise<
+  { ok: true; counts: AuthorContentCounts } | { ok: false; kind: "not_found" | "forbidden_target" }
+> => {
+  const denied = await bulkContentTargetDenied(actorUserId, targetUserId);
+  if (denied) return { ok: false, kind: denied };
+  return {
+    ok: true,
+    counts: await countAuthorContent(targetUserId, bulkCutoffForBanContent(contentBan)),
+  };
 };
 
 export const staffBulkBanUserContent = async (
   actorUserId: string,
   targetUserId: string,
   contentBan: BulkBanContentInput,
+  media: BulkContentMedia = "keep",
 ): Promise<
-  | { ok: true; actionId: string; voxCount: number; commentCount: number }
+  | {
+      ok: true;
+      actionId: string;
+      voxCount: number;
+      commentCount: number;
+      fileCount: number;
+      blockedHashes: number;
+    }
   | { ok: false; kind: "not_found" | "forbidden_target" }
 > => {
-  const [actor, target] = await Promise.all([
-    prisma.user.findUnique({ where: { id: actorUserId }, select: { role: true } }),
-    prisma.user.findUnique({ where: { id: targetUserId }, select: { role: true } }),
-  ]);
-  if (!target) return { ok: false, kind: "not_found" };
-  if (!actor || !canModerateTarget(actor.role, target.role, actorUserId === targetUserId)) {
-    return { ok: false, kind: "forbidden_target" };
-  }
+  const denied = await bulkContentTargetDenied(actorUserId, targetUserId);
+  if (denied) return { ok: false, kind: denied };
   const cutoff = bulkCutoffForBanContent(contentBan);
   const banContentLabelEsPayload =
     contentBan.kind === "forever"
       ? banContentWindowLabelEs(true)
       : banContentWindowLabelEs(false, contentBan.amount, contentBan.unit);
-  const voxWhere: Prisma.VoxWhereInput = {
-    ownerId: targetUserId,
-    deletedAt: null,
-    ...(cutoff ? { createdAt: { gte: cutoff } } : {}),
-  };
-  const commentWhere: Prisma.CommentWhereInput = {
-    authorId: targetUserId,
-    deletedAt: null,
-    ...(cutoff ? { createdAt: { gte: cutoff } } : {}),
-  };
+  const voxWhere = authorVoxWhere(targetUserId, cutoff);
+  const commentWhere = authorCommentWhere(targetUserId, cutoff);
   const now = new Date();
   const bulkResult = await prisma.$transaction(async (tx) => {
     const voxRows = await tx.vox.findMany({ where: voxWhere });
@@ -94,6 +122,7 @@ export const staffBulkBanUserContent = async (
               }
             : {}),
           banContentLabel: banContentLabelEsPayload,
+          media,
           voxIds,
           commentIds,
           snapshots: [
@@ -115,11 +144,32 @@ export const staffBulkBanUserContent = async (
     });
     return { a, voxCount: voxIds.length, commentCount: commentIds.length, voxIds, commentRows };
   });
+  // After the soft delete, so the files stop being served once nothing can show them.
+  const purged =
+    media === "keep"
+      ? { fileCount: 0, blockedHashes: 0, voxIds: [] }
+      : await purgeAuthorPublicationMedia(targetUserId, cutoff, {
+          blockHashes: media === "block",
+        });
+  if (media !== "keep") {
+    await prisma.moderationAction.update({
+      where: { id: bulkResult.a.id },
+      data: {
+        payload: {
+          ...(bulkResult.a.payload as Prisma.JsonObject),
+          purgedFiles: purged.fileCount,
+          blockedHashes: purged.blockedHashes,
+        },
+      },
+    });
+  }
   const affectedVox = new Set<string>([
     ...bulkResult.voxIds,
     ...bulkResult.commentRows.map((c) => c.voxId),
   ]);
-  for (const voxId of bulkResult.voxIds) invalidateVoxDetailCache(voxId);
+  for (const voxId of new Set([...bulkResult.voxIds, ...purged.voxIds])) {
+    invalidateVoxDetailCache(voxId);
+  }
   await broadcastVoxBulkDeleted(bulkResult.voxIds, "moderation");
   const commentOnlyVoxIds = [...affectedVox].filter((id) => !bulkResult.voxIds.includes(id));
   await Promise.all([
@@ -134,6 +184,8 @@ export const staffBulkBanUserContent = async (
     actionId: bulkResult.a.id,
     voxCount: bulkResult.voxCount,
     commentCount: bulkResult.commentCount,
+    fileCount: purged.fileCount,
+    blockedHashes: purged.blockedHashes,
   };
 };
 

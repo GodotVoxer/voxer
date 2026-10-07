@@ -4,6 +4,8 @@ import { useId, type ReactNode } from "react";
 import type { AuthorBanDraft, BanContentScope } from "@/features/moderation/publicationPlan";
 import type { DurationUnit } from "@/lib/time";
 import type { PublicationAuthorState } from "@/hooks/moderation/usePublicationModeration";
+import type { AuthorContentCountsState } from "@/hooks/moderation/useAuthorContentCounts";
+import { BulkContentMediaSection } from "@/components/Moderation/Dialogs/BulkContentMediaSection";
 
 type Props = {
   owner: PublicationAuthorState;
@@ -11,6 +13,8 @@ type Props = {
   onEnabledChange: (next: boolean) => void;
   draft: AuthorBanDraft;
   onDraftChange: (patch: Partial<AuthorBanDraft>) => void;
+  contentCounts: AuthorContentCountsState;
+  canBlockMedia: boolean;
   disabled?: boolean;
 };
 
@@ -96,6 +100,8 @@ export const AuthorBanSection = ({
   onEnabledChange,
   draft,
   onDraftChange,
+  contentCounts,
+  canBlockMedia,
   disabled,
 }: Props) => {
   const durationGroup = useId();
@@ -213,6 +219,16 @@ export const AuthorBanSection = ({
                 ) : null}
               </RadioRow>
             ))}
+            {draft.contentScope !== "none" ? (
+              <div className="mt-1 ml-6">
+                <BulkContentMediaSection
+                  draft={draft}
+                  onDraftChange={onDraftChange}
+                  counts={contentCounts}
+                  canBlock={canBlockMedia}
+                />
+              </div>
+            ) : null}
           </div>
         </fieldset>
       ) : null}

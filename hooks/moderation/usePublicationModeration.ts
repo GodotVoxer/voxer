@@ -12,8 +12,10 @@ import { useAuthStore } from "@/features/auth/store";
 import type { StaffPublicationModTarget } from "@/features/moderation/types";
 import { isAdminRole } from "@/lib/moderation/roles";
 import {
+  banContentWindow,
   DEFAULT_AUTHOR_BAN_DRAFT,
   fateDeletesPublication,
+  illegalContentPreset,
   fatePurgesMedia,
   parsePositiveInt,
   publicationModerationConfirmLabel,
@@ -24,6 +26,7 @@ import {
   type PublicationModerationPlan,
 } from "@/features/moderation/publicationPlan";
 import { userFacingApiErrorMessage } from "@/features/http/responseErrors";
+import { useAuthorContentCounts } from "@/hooks/moderation/useAuthorContentCounts";
 
 export type PublicationModerationResult = {
   target: StaffPublicationModTarget;
@@ -142,6 +145,16 @@ export const usePublicationModeration = ({ target, onCompleted }: Args) => {
     setError(null);
   }, []);
 
+  const applyIllegalContentPreset = useCallback(() => {
+    const preset = illegalContentPreset(banDraft, canBlockMedia);
+    setFate(preset.fate);
+    setBanDraft(preset.ban);
+    setBanEnabled(canBan);
+    setError(null);
+  }, [banDraft, canBlockMedia, canBan]);
+
+  const contentCounts = useAuthorContentCounts(banEnabled ? ownerId : null, banDraft);
+
   // Steps already applied: when one fails midway, a retry does not repeat what the server did.
   const appliedRef = useRef<Record<ModerationStep, boolean>>({
     delete: false,
@@ -197,18 +210,10 @@ export const usePublicationModeration = ({ target, onCompleted }: Args) => {
           blockClientNetwork: ban.blockNetwork,
         }),
       );
-      if (ban.contentScope !== "none") {
+      const contentWindow = banContentWindow(ban);
+      if (contentWindow) {
         await run("content", () =>
-          banUserContentAsModerator(
-            ownerId,
-            ban.contentScope === "all"
-              ? { forever: true }
-              : {
-                  forever: false,
-                  amount: parsePositiveInt(ban.contentAmount) ?? 1,
-                  unit: ban.contentUnit,
-                },
-          ),
+          banUserContentAsModerator(ownerId, { ...contentWindow, media: ban.contentMedia }),
         );
       }
     }
@@ -237,6 +242,8 @@ export const usePublicationModeration = ({ target, onCompleted }: Args) => {
     canBan,
     banEnabled,
     toggleBan,
+    applyIllegalContentPreset,
+    contentCounts,
     banDraft,
     updateBanDraft,
     summaryLines,

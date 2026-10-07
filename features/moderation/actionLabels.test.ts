@@ -55,6 +55,21 @@ describe("moderationActionPayloadSummary", () => {
     expect(summary).toBe("abuso · Restricción por huella de red");
   });
 
+  it("bulk delete: says when the files were purged or blocked", () => {
+    const summary = (media?: string) =>
+      moderationActionPayloadSummary(
+        row({
+          id: "bulk",
+          actionType: "BULK_SOFT_DELETE_USER_CONTENT",
+          payload: { voxIds: ["v1"], commentIds: [], banContentLabel: "todo", media },
+        }),
+      );
+    expect(summary()).toBe("vox: 1, comentarios: 0, todo");
+    expect(summary("keep")).toBe("vox: 1, comentarios: 0, todo");
+    expect(summary("purge")).toBe("vox: 1, comentarios: 0, todo, archivos borrados");
+    expect(summary("block")).toBe("vox: 1, comentarios: 0, todo, archivos borrados y bloqueados");
+  });
+
   it("recategorize: shows an arrow", () => {
     const summary = moderationActionPayloadSummary(
       row({

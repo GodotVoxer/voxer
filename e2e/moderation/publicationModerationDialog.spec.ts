@@ -121,3 +121,31 @@ test("deleting a comment offers purging its media only when it has some, and blo
   await expect(dialog).toBeHidden();
   await expect(row).toHaveCount(0);
 });
+
+test("the illegal content preset marks everything and still asks to confirm the files", async ({
+  page,
+}) => {
+  await page.goto("/vox/1");
+  await expect(page.getByRole("button", { name: "Acciones de staff" }).first()).toBeVisible();
+  const dialog = await openModerationForFirstComment(page);
+  await dialog.getByRole("button", { name: "Contenido ilegal" }).click();
+
+  await expect(dialog.getByRole("radio", { name: /Eliminar, borrar y bloquear/ })).toBeChecked();
+  await expect(dialog.getByRole("radio", { name: "Permanente" })).toBeChecked();
+  await expect(dialog.getByRole("checkbox", { name: /Banear también la red/ })).toBeChecked();
+  await expect(dialog.getByRole("radio", { name: "Todo su historial" })).toBeChecked();
+  await expect(dialog.getByRole("radio", { name: /Borrar y bloquear los archivos/ })).toBeChecked();
+  await expect(dialog.getByText(/Alcanza 4 vox y 17 comentarios/)).toBeVisible();
+
+  const confirm = dialog.getByRole("button", { name: "Eliminar y banear" });
+  await confirm.click();
+  await expect(dialog.getByText(/Confirmá que revisaste al autor/)).toBeVisible();
+
+  await dialog.getByRole("checkbox", { name: /Revisé que es el autor correcto/ }).check();
+  const bulk = page.waitForRequest(
+    (r) => r.url().includes("/ban-content") && r.method() === "POST",
+  );
+  await confirm.click();
+  expect((await bulk).postDataJSON()).toEqual({ forever: true, media: "block" });
+  await expect(dialog).toBeHidden();
+});

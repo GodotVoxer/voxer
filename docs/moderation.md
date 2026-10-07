@@ -14,7 +14,11 @@ Los roles son `USER`, `MOD` y `ADMIN` (`lib/moderation/roles.ts`). Las rutas de 
 `PublicationStaffModerationDialog` es la única entrada (menú de staff del comentario, riel de staff de la tarjeta, botón «Moderar vox» del detalle e historial del autor). Tiene dos pasos independientes:
 
 1. **La publicación**, como una escalera donde cada escalón incluye al anterior: dejarla, borrarla, borrarla y purgar el archivo, o borrarla, purgar el archivo y bloquear su hash (solo admins; irreversible).
-2. **El autor**: opcionalmente, banearlo, con motivo, duración, alcance de cuenta o de red, y qué otras publicaciones suyas borrar (ninguna, las de un período o todas).
+2. **El autor**: opcionalmente, banearlo, con motivo, duración, alcance de cuenta o de red, y qué otras publicaciones suyas borrar (ninguna, las de un período o todas). Antes de confirmar, el diálogo muestra cuántas publicaciones entran en ese alcance (`GET /api/moderation/users/[id]/ban-content`).
+
+Para esas otras publicaciones también se elige qué pasa con sus archivos: conservarlos (por defecto, para que deshacer las devuelva enteras), borrarlos o, solo para admins, borrarlos y bloquear sus hashes. La purga en bloque alcanza también las publicaciones del período que ya estaban ocultas, porque un archivo oculto se sigue sirviendo por su URL hasta que vence el borrado reversible. Llega tan lejos como purgarlas una por una: un vox se lleva los archivos de todos sus comentarios. Como no se puede deshacer, pide marcar una confirmación aparte.
+
+El botón «Contenido ilegal» está pensado para gore o abuso infantil y marca todo junto: borrar y bloquear el archivo (borrar, para un `MOD`), ban permanente con la red y todo el historial con sus archivos. Igual hay que revisarlo y marcar la confirmación.
 
 La lógica del plan es pura (`features/moderation/publicationPlan.ts`); `hooks/moderation/usePublicationModeration.ts` ejecuta los pasos en orden (borrar → purgar/bloquear → ban → borrado en bloque), recuerda cuáles ya salieron bien para que un reintento no los repita, e informa lo que se aplicó aunque falle un paso posterior.
 
@@ -41,4 +45,4 @@ Un admin puede editar el título y la descripción de sus propios vox (`PATCH /a
 
 ## Denuncias
 
-Los usuarios denuncian vox y comentarios. Las denuncias se deduplican por denunciante, publicación y motivo, le avisan al staff por su propia campana y su propio canal de push, y llevan directo al contenido denunciado. Como en las notificaciones, el panel muestra primero las no vistas y, dentro de cada grupo, las más nuevas arriba.
+Los usuarios denuncian vox y comentarios. Las denuncias se deduplican por denunciante, publicación y motivo, le avisan al staff por su propia campana y su propio canal de push, y llevan directo al contenido denunciado. Como en las notificaciones, el panel muestra primero las no vistas y, dentro de cada grupo, las más nuevas arriba. Las miniaturas se ven borrosas hasta que se tocan, porque pueden ser justamente el contenido denunciado.
