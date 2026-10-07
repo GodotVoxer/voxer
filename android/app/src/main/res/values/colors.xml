@@ -7,7 +7,7 @@
 <resources>
     <color name="voxer_surface_dark">#030712</color>
     <color name="voxer_surface_light">#f3f4f6</color>
-    <color name="voxer_brand">#0084d1</color>
+    <color name="voxer_brand">#0078c4</color>
     <color name="voxer_on_surface_dark">#ffffff</color>
     <color name="voxer_on_surface_muted_dark">#99a1af</color>
     <color name="voxer_on_solid">#ffffff</color>

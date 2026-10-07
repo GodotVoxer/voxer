@@ -43,4 +43,10 @@ describe("builtin themes", () => {
     });
     expect(failures).toEqual([]);
   });
+
+  it.each(themes)("$id solid buttons reach AA for normal text", (theme) => {
+    expect(
+      contrastRatio(theme.tokens["on-solid"], theme.tokens["brand-600"]),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
 });

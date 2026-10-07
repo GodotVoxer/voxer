@@ -15,6 +15,7 @@ import { VOX_DESCRIPTION_MAX, VOX_POLL_OPTION_MAX, VOX_TITLE_MAX } from "@/lib/l
 import { FriendlyError } from "@/components/Shell/FriendlyError";
 import { BanBlockedDialog } from "@/components/Moderation/Dialogs/BanBlockedDialog";
 import { VoxFormPreview } from "./VoxFormPreview";
+import { CreateVoxTriggerButton } from "./CreateVoxTriggerButton";
 import { FileDropHintOverlay } from "@/components/FileDrop/FileDropHintOverlay";
 import { getFirstClipboardVoxUploadFile } from "@/features/media/uploadClientFiles";
 import { useCreateVoxForm } from "@/hooks/vox/useCreateVoxForm";
@@ -77,14 +78,7 @@ export const CreateVoxDialog = () => {
       <BanBlockedDialog open={banDialogOpen} onOpenChange={setBanDialogOpen} ban={banPayload} />
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="app-header-control cursor-pointer rounded-md border border-brand-800/60 bg-surface-raised text-brand-100 hover:border-brand-500 hover:bg-brand-950 hover:text-fg"
-          >
-            <Plus className="size-6" />
-            <span className="sr-only">Crear vox</span>
-          </Button>
+          <CreateVoxTriggerButton />
         </DialogTrigger>
         <DialogContent className="sm:max-w-2xl border-fg/10" aria-describedby={undefined}>
           <div className="relative grid min-h-0 w-full gap-4" {...dropHandlers}>

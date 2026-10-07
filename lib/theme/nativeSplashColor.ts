@@ -4,7 +4,7 @@
  */
 export const ANDROID_SPLASH_DARK_HEX = "#030712";
 export const ANDROID_SPLASH_LIGHT_HEX = "#f3f4f6";
-export const ANDROID_BRAND_HEX = "#0084d1";
+export const ANDROID_BRAND_HEX = "#0078c4";
 /** Text of the native error screen, always drawn on the dark background. */
 export const ANDROID_ON_SURFACE_DARK_HEX = "#ffffff";
 export const ANDROID_ON_SURFACE_MUTED_DARK_HEX = "#99a1af";

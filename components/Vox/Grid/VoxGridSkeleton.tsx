@@ -1,60 +1,28 @@
-"use client";
-
-import { useLayoutEffect, useRef, useState } from "react";
 import { VoxCardSkeleton } from "./VoxCard/VoxCardSkeleton";
-import {
-  getVoxGridTrackLayout,
-  readGridTrackWidthPx,
-  VOX_GRID_GAP_PX,
-} from "@/features/vox/grid/gridLayout";
+import { VOX_GRID_GAP_PX, VOX_GRID_RIGHT_RING_SAFE_PX } from "@/features/vox/grid/gridLayout";
 
 type Props = {
   count?: number;
 };
 
+const skeletonGridStyle = {
+  gap: VOX_GRID_GAP_PX,
+  paddingRight: VOX_GRID_RIGHT_RING_SAFE_PX,
+} as const;
+
+/**
+ * Pure CSS so the server HTML already has the final size (measuring in JS painted 1px cells until
+ * hydration). The breakpoints mirror `getVoxGridTrackLayout`; keep them in sync.
+ */
 export const VoxGridSkeleton = ({ count = 12 }: Props) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [trackWidthPx, setTrackWidthPx] = useState(0);
-
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const measure = () => setTrackWidthPx(readGridTrackWidthPx(el));
-    const ro = new ResizeObserver(() => measure());
-    ro.observe(el);
-    measure();
-    return () => ro.disconnect();
-  }, []);
-
-  const { columns, columnWidth } = getVoxGridTrackLayout(trackWidthPx);
-  const rowCount = Math.ceil(count / columns);
-
   return (
-    <div ref={containerRef} className="w-full min-w-0">
-      <div className="flex flex-col" style={{ gap: VOX_GRID_GAP_PX }}>
-        {Array.from({ length: rowCount }, (_, rowIndex) => (
-          <div
-            key={rowIndex}
-            className="flex min-w-0 justify-start"
-            style={{ gap: VOX_GRID_GAP_PX }}
-          >
-            {Array.from({ length: columns }, (_, colIndex) => {
-              const i = rowIndex * columns + colIndex;
-              if (i >= count) return null;
-              return (
-                <div
-                  key={i}
-                  className="min-w-0 shrink-0 overflow-visible"
-                  style={{
-                    width: `${columnWidth}px`,
-                    flex: `0 0 ${columnWidth}px`,
-                  }}
-                >
-                  <VoxCardSkeleton />
-                </div>
-              );
-            })}
-          </div>
+    <div className="@container w-full min-w-0">
+      <div
+        className="grid grid-cols-2 @min-[640px]:grid-cols-[repeat(auto-fill,minmax(168px,1fr))] @min-[768px]:grid-cols-[repeat(auto-fill,minmax(clamp(200px,calc(100cqw/6.5),340px),1fr))]"
+        style={skeletonGridStyle}
+      >
+        {Array.from({ length: count }, (_, i) => (
+          <VoxCardSkeleton key={i} />
         ))}
       </div>
     </div>

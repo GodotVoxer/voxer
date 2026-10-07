@@ -101,7 +101,7 @@ const PromptOption = ({
       >
         {label}
       </span>
-      <span className={cn("block text-xs", emphasis ? "text-on-solid/85" : "text-fg-muted")}>
+      <span className={cn("block text-xs", emphasis ? "text-on-solid" : "text-fg-muted")}>
         {detail}
       </span>
     </span>

@@ -18,7 +18,8 @@ const TAILWIND_RAMPS: Record<ThemeRampFamily, Ramp> = {
     300: "oklch(82.8% 0.111 230.318)",
     400: "oklch(74.6% 0.16 232.661)",
     500: "oklch(68.5% 0.169 237.323)",
-    600: "oklch(58.8% 0.158 241.966)",
+    // Darker than Tailwind sky-600 so white text on solid buttons reaches 4.5:1.
+    600: "oklch(55% 0.158 241.966)",
     700: "oklch(50% 0.134 242.749)",
     800: "oklch(44.3% 0.11 240.79)",
     900: "oklch(39.1% 0.09 240.876)",

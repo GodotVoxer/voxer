@@ -27,9 +27,11 @@ import { ThemeEditorHost } from "@/components/Theme/ThemeEditorHost";
 import { ThemeSafeModeBanner } from "@/components/Theme/ThemeSafeModeBanner";
 import { useAuthStore } from "@/features/auth/store";
 import { useFullscreenScrollRestore } from "@/hooks/device/useFullscreenScrollRestore";
+import { CreateVoxTriggerButton } from "@/components/Vox/CreateVoxTriggerButton";
+import { cn } from "@/lib/utils";
 const CreateVoxDialog = dynamic(
   () => import("@/components/Vox/CreateVoxDialog").then((m) => m.CreateVoxDialog),
-  { ssr: false },
+  { ssr: false, loading: () => <CreateVoxTriggerButton disabled /> },
 );
 
 export const Header = () => {
@@ -73,12 +75,16 @@ export const Header = () => {
           </Link>
           <span className="flex-1 min-w-2" />
           <SearchVoxDialog />
-          {!loading && !user && (
+          {/* Hidden instead of absent while the session loads, so the header does not shift for visitors. */}
+          {!user && (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="app-header-control cursor-pointer shrink-0 border-fg/25 bg-surface-raised text-fg hover:bg-fg/10"
+              className={cn(
+                "app-header-control cursor-pointer shrink-0 border-fg/25 bg-surface-raised text-fg hover:bg-fg/10",
+                loading && "invisible",
+              )}
               onClick={() => openAuthDialog()}
             >
               Entrar
