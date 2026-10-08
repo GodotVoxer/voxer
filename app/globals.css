@@ -854,6 +854,33 @@
   mask-repeat: no-repeat;
 }
 
+:root[data-seasonal-theme="halloween"] .staff-reaper-admin svg {
+  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--danger-600) 70%, transparent));
+}
+
+.staff-reaper-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: staff-reaper-blink 5s infinite;
+}
+
+@keyframes staff-reaper-blink {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+  93% {
+    transform: scaleY(0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-reaper-eyes {
+    animation: none;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

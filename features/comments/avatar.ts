@@ -45,3 +45,12 @@ export const avatarClass = (variant: AvatarVariant): string => {
       return "bg-avatar-gray text-on-media";
   }
 };
+
+const STAFF_BLINK_SPREAD_TENTHS = 50;
+
+/** Spreads the staff reaper's blink over its 5s cycle so avatars in one thread do not blink together. */
+export const staffBlinkDelaySeconds = (seed: string): number => {
+  let hash = 0;
+  for (const char of seed) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return -(hash % STAFF_BLINK_SPREAD_TENTHS) / 10;
+};

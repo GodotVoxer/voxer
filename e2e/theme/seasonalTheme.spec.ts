@@ -81,4 +81,23 @@ test.describe("Halloween seasonal theme", () => {
     await openSidebar(page);
     await expect(seasonalSwitch(page)).toHaveCount(0);
   });
+
+  test("staff comments show the hooded reaper instead of the police lights", async ({
+    page,
+    context,
+  }) => {
+    await seedDemo(context, { role: "ADMIN", seasonal: true });
+    await page.clock.setFixedTime(IN_SEASON);
+    await page.goto("/vox/4");
+    const textarea = page.getByPlaceholder(/Escribí un comentario/);
+    await expect(textarea).toBeVisible();
+
+    await page.getByLabel("Mostrar mi usuario como staff").check();
+    await textarea.fill("La parca vigila este hilo");
+    await page.getByRole("button", { name: "Comentar", exact: true }).click();
+
+    const reaper = page.locator(".staff-reaper[title='Moderador']");
+    await expect(reaper.first()).toBeVisible();
+    await expect(page.locator(".comment-staff-police-bg")).toHaveCount(0);
+  });
 });
