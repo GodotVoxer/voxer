@@ -1,21 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { ReportReason } from "@prisma/client";
-import { ReportReason as ReportReasonEnum } from "@prisma/client";
+import { REPORT_REASONS } from "@/lib/moderation/reportReasonLabels";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { postReport } from "@/features/moderation/api";
 import { ReportEntityDialogForm } from "@/components/Moderation/Dialogs/ReportEntityDialogForm";
 import { ReportEntityDialogSuccess } from "@/components/Moderation/Dialogs/ReportEntityDialogSuccess";
 import { userFacingApiErrorMessage } from "@/features/http/responseErrors";
-
-const REASONS: ReportReason[] = [
-  ReportReasonEnum.WRONG_CATEGORY,
-  ReportReasonEnum.NSFW_OUT_OF_CATEGORY,
-  ReportReasonEnum.GORE,
-  ReportReasonEnum.SPAM,
-  ReportReasonEnum.ILLEGAL_CONTENT,
-  ReportReasonEnum.OTHER,
-];
 
 const SUCCESS_AUTO_CLOSE_MS = 1600;
 
@@ -30,7 +21,7 @@ type Props = {
 };
 
 export const ReportEntityDialog = ({ open, onOpenChange, voxId, voxTitle, commentId }: Props) => {
-  const [reason, setReason] = useState<ReportReason>(ReportReasonEnum.WRONG_CATEGORY);
+  const [reason, setReason] = useState<ReportReason>(REPORT_REASONS[0]);
   const [details, setDetails] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [err, setErr] = useState<string | null>(null);
@@ -51,7 +42,7 @@ export const ReportEntityDialog = ({ open, onOpenChange, voxId, voxTitle, commen
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
-      setReason(ReportReasonEnum.WRONG_CATEGORY);
+      setReason(REPORT_REASONS[0]);
       setDetails("");
       setErr(null);
       setPhase("idle");
@@ -109,7 +100,7 @@ export const ReportEntityDialog = ({ open, onOpenChange, voxId, voxTitle, commen
           <ReportEntityDialogForm
             voxTitle={voxTitle}
             commentId={commentId}
-            reasons={REASONS}
+            reasons={REPORT_REASONS}
             reason={reason}
             onReasonChange={setReason}
             details={details}

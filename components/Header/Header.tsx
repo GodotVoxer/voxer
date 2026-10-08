@@ -15,7 +15,6 @@ import { HomeFeedRealtimeBridge } from "@/components/Vox/Grid/HomeFeedRealtimeBr
 import { GlobalPresenceBridge } from "@/components/Header/GlobalPresenceBridge";
 import { NotificationsBell } from "@/components/Notifications/NotificationsBell";
 import { WebPushBridge } from "@/components/Notifications/WebPushBridge";
-import { ModerationReportsBell } from "@/components/Moderation/Reports/ModerationReportsBell";
 import { SearchVoxDialog } from "./SearchVoxDialog";
 import { ThemeAccountSync } from "@/components/Theme/ThemeAccountSync";
 import { ThemeApplier } from "@/components/Theme/ThemeApplier";
@@ -26,9 +25,18 @@ import { MediaViewerHost } from "@/components/Media/MediaViewerHost";
 import { ThemeEditorHost } from "@/components/Theme/ThemeEditorHost";
 import { ThemeSafeModeBanner } from "@/components/Theme/ThemeSafeModeBanner";
 import { useAuthStore } from "@/features/auth/store";
+import { isStaffRole } from "@/lib/moderation/roles";
 import { useFullscreenScrollRestore } from "@/hooks/device/useFullscreenScrollRestore";
 import { CreateVoxTriggerButton } from "@/components/Vox/CreateVoxTriggerButton";
 import { cn } from "@/lib/utils";
+// Staff only: other visitors never download it.
+const ModerationReportsBell = dynamic(
+  () =>
+    import("@/components/Moderation/Reports/ModerationReportsBell").then(
+      (m) => m.ModerationReportsBell,
+    ),
+  { ssr: false },
+);
 const CreateVoxDialog = dynamic(
   () => import("@/components/Vox/CreateVoxDialog").then((m) => m.CreateVoxDialog),
   { ssr: false, loading: () => <CreateVoxTriggerButton disabled /> },
@@ -106,7 +114,7 @@ export const Header = () => {
             </div>
           )}
           {user ? <MobileAccountMenu /> : null}
-          <ModerationReportsBell />
+          {user && isStaffRole(user.role) ? <ModerationReportsBell /> : null}
           <NotificationsBell />
           <CreateVoxDialog />
         </div>

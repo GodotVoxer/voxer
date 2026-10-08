@@ -1,4 +1,3 @@
-import { ReportReason } from "@prisma/client";
 import { z } from "zod";
 import {
   COMMENT_BODY_MAX,
@@ -11,11 +10,12 @@ import {
 import { commentBodyLineCount } from "@/lib/comments/normalizeCommentBody";
 import { banContentWindowMaxAmountForUnit } from "@/lib/moderation/contentBan";
 import { voxCategorySchema } from "@/lib/vox/schemas";
+import { REPORT_REASONS } from "@/lib/moderation/reportReasonLabels";
 
 export const createReportSchema = z.object({
   voxId: z.string().min(1),
   commentId: z.string().optional(),
-  reason: z.enum(ReportReason),
+  reason: z.enum(REPORT_REASONS),
   details: z.string().max(REPORT_DETAILS_MAX).optional(),
 });
 

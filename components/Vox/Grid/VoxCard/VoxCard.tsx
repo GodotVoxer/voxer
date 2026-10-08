@@ -3,10 +3,9 @@ import { memo, useRef } from "react";
 import type { VoxListItem, VoxListView } from "@/lib/vox/types";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useVoxCardGridInteractions } from "@/hooks/vox/useVoxCardGridInteractions";
 import { useVoxStore } from "@/features/vox/store";
-import { ReportEntityDialog } from "@/components/Moderation/Dialogs/ReportEntityDialog";
-import { PublicationStaffModerationDialog } from "@/components/Moderation/Dialogs/PublicationStaffModerationDialog";
 import {
   voxCardFrameRestClassName,
   voxCardInnerShellClassName,
@@ -14,11 +13,34 @@ import {
 import { VOX_CARD_NAV_DATA_ATTR } from "@/features/vox/grid/cardTouchActions";
 import { cn } from "@/lib/utils";
 import { VoxCardBottomTitle } from "./VoxCardBottomTitle";
-import { VoxCardRecategorizeDialog } from "./VoxCardRecategorizeDialog";
-import { VoxCardStaffRail } from "./VoxCardStaffRail";
 import { VoxCardTopOverlays } from "./VoxCardTopOverlays";
 import { VoxCardUserRail } from "./VoxCardUserRail";
 import { voxPath } from "@/lib/vox/paths";
+import { useOpenedOnce } from "@/hooks/common/useOpenedOnce";
+
+// Every card would otherwise hydrate these closed dialogs, and staff tools would ship to every visitor.
+const ReportEntityDialog = dynamic(
+  () =>
+    import("@/components/Moderation/Dialogs/ReportEntityDialog").then((m) => m.ReportEntityDialog),
+  { ssr: false },
+);
+const PublicationStaffModerationDialog = dynamic(
+  () =>
+    import("@/components/Moderation/Dialogs/PublicationStaffModerationDialog").then(
+      (m) => m.PublicationStaffModerationDialog,
+    ),
+  { ssr: false },
+);
+const VoxCardRecategorizeDialog = dynamic(
+  () => import("./VoxCardRecategorizeDialog").then((m) => m.VoxCardRecategorizeDialog),
+  { ssr: false },
+);
+const VoxCardStaffRail = dynamic(
+  () => import("./VoxCardStaffRail").then((m) => m.VoxCardStaffRail),
+  {
+    ssr: false,
+  },
+);
 
 type Props = {
   vox: VoxListItem;
@@ -73,6 +95,9 @@ const VoxCardView = ({
     listView,
     cardRef,
   });
+  const reportOpened = useOpenedOnce(reportOpen);
+  const staffPubModOpened = useOpenedOnce(staffPubModOpen);
+  const recategorizeOpened = useOpenedOnce(recategorizeOpen);
 
   return (
     <>
@@ -184,13 +209,15 @@ const VoxCardView = ({
           <VoxCardBottomTitle title={vox.title} />
         </div>
       </div>
-      <ReportEntityDialog
-        open={reportOpen}
-        onOpenChange={setReportOpen}
-        voxId={vox.id}
-        voxTitle={vox.title}
-      />
-      {staff ? (
+      {reportOpened ? (
+        <ReportEntityDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          voxId={vox.id}
+          voxTitle={vox.title}
+        />
+      ) : null}
+      {staff && staffPubModOpened ? (
         <PublicationStaffModerationDialog
           open={staffPubModOpen}
           onOpenChange={setStaffPubModOpen}
@@ -198,7 +225,7 @@ const VoxCardView = ({
           onCompleted={onStaffModerationCompleted}
         />
       ) : null}
-      {staff ? (
+      {staff && recategorizeOpened ? (
         <VoxCardRecategorizeDialog
           open={recategorizeOpen}
           onOpenChange={setRecategorizeOpen}

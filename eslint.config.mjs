@@ -42,6 +42,25 @@ const eslintConfig = [
       "react-hooks/refs": "error",
     },
   },
+  {
+    // A value import from @prisma/client ships Prisma's runtime to every visitor.
+    files: ["lib/**", "features/**", "hooks/**", "components/**"],
+    ignores: ["**/*.test.ts"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@prisma/client",
+              allowTypeImports: true,
+              message: "Client code may only import types from @prisma/client.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   boundary(["lib/**"], ["server", "features", "hooks", "components", "app", "mocks"]),
   boundary(["server/**"], ["features", "hooks", "components", "app"]),
   boundary(["features/**"], ["server", "hooks", "components", "app"]),
