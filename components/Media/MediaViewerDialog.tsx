@@ -26,6 +26,13 @@ export const MediaViewerDialog = () => {
   const closeMediaViewer = useMediaViewerStore((s) => s.closeMediaViewer);
 
   const stageRef = useRef<HTMLDivElement>(null);
+  // The stage lives in a portal that mounts after this component's first effects run, so the wheel
+  // listener waits for the node instead of reading the ref once.
+  const [stage, setStage] = useState<HTMLDivElement | null>(null);
+  const stageCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    stageRef.current = node;
+    setStage(node);
+  }, []);
   const contentRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState<MediaViewerTransform>(MEDIA_VIEWER_IDENTITY);
 
@@ -61,7 +68,6 @@ export const MediaViewerDialog = () => {
   // Native `wheel` listener: React registers it as passive, which would not let us stop the
   // browser zoom or the page scroll behind.
   useEffect(() => {
-    const stage = stageRef.current;
     if (!stage) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -73,7 +79,7 @@ export const MediaViewerDialog = () => {
     };
     stage.addEventListener("wheel", onWheel, { passive: false });
     return () => stage.removeEventListener("wheel", onWheel);
-  }, [applyTransform, focusFromClient]);
+  }, [stage, applyTransform, focusFromClient]);
 
   if (!item) return null;
 
@@ -143,7 +149,7 @@ export const MediaViewerDialog = () => {
           </DialogPrimitive.Title>
 
           <div
-            ref={stageRef}
+            ref={stageCallbackRef}
             className="flex size-full touch-none select-none items-center justify-center overflow-hidden"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}

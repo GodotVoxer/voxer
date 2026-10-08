@@ -39,6 +39,20 @@ test.describe("fullscreen image viewer", () => {
     await expect(viewer).toBeHidden();
   });
 
+  test("the mouse wheel zooms the image", async ({ page, context }) => {
+    await prepare(context, VIEWER_ENABLED);
+    await page.goto("/vox/1");
+    await page.getByTitle("Ver imagen").first().click();
+
+    const viewer = page.locator('[data-slot="media-viewer"]');
+    await expect(viewer.locator("img")).toBeVisible();
+    const reset = viewer.getByRole("button", { name: "Restablecer zoom" });
+    await expect(reset).toHaveCount(0);
+    await viewer.locator("img").hover();
+    await page.mouse.wheel(0, -300);
+    await expect(reset).toBeVisible();
+  });
+
   test("by default images still open in a new tab", async ({ page, context }) => {
     await prepare(context);
     await page.goto("/vox/1");
