@@ -7,8 +7,6 @@ import { Sidebar } from "@/components/Sidebar/Sidebar";
 import { MobileAccountMenu } from "./MobileAccountMenu";
 import { HeaderCategoriesMenu } from "./HeaderCategoriesMenu";
 import { AuthBootstrap } from "@/components/Auth/AuthBootstrap";
-import { AuthDialog } from "@/components/Auth/AuthDialog";
-import { CommunityRulesDialog } from "@/components/Auth/CommunityRulesDialog";
 import { UserRealtimeBridge } from "@/components/Auth/UserRealtimeBridge";
 import { NativeAppBridge } from "@/components/Native/NativeAppBridge";
 import { HomeFeedRealtimeBridge } from "@/components/Vox/Grid/HomeFeedRealtimeBridge";
@@ -25,10 +23,20 @@ import { MediaViewerHost } from "@/components/Media/MediaViewerHost";
 import { ThemeEditorHost } from "@/components/Theme/ThemeEditorHost";
 import { ThemeSafeModeBanner } from "@/components/Theme/ThemeSafeModeBanner";
 import { useAuthStore } from "@/features/auth/store";
+import { useRulesPromptStore } from "@/features/auth/rulesPromptStore";
+import { useIdleReady } from "@/hooks/common/useIdleReady";
 import { isStaffRole } from "@/lib/moderation/roles";
 import { useFullscreenScrollRestore } from "@/hooks/device/useFullscreenScrollRestore";
 import { CreateVoxTriggerButton } from "@/components/Vox/CreateVoxTriggerButton";
 import { cn } from "@/lib/utils";
+// Closed until someone signs in or must accept the rules: mounted once the page is idle.
+const AuthDialog = dynamic(() => import("@/components/Auth/AuthDialog").then((m) => m.AuthDialog), {
+  ssr: false,
+});
+const CommunityRulesDialog = dynamic(
+  () => import("@/components/Auth/CommunityRulesDialog").then((m) => m.CommunityRulesDialog),
+  { ssr: false },
+);
 // Staff only: other visitors never download it.
 const ModerationReportsBell = dynamic(
   () =>
@@ -47,6 +55,9 @@ export const Header = () => {
   const user = useAuthStore((s) => s.user);
   const loading = useAuthStore((s) => s.loading);
   const openAuthDialog = useAuthStore((s) => s.openAuthDialog);
+  const authDialogOpen = useAuthStore((s) => s.authDialogOpen);
+  const rulesPromptOpen = useRulesPromptStore((s) => s.reason !== null);
+  const idle = useIdleReady();
   const logout = useAuthStore((s) => s.logout);
   useFullscreenScrollRestore();
   return (
@@ -65,8 +76,8 @@ export const Header = () => {
       <UserRealtimeBridge />
       <HomeFeedRealtimeBridge />
       <GlobalPresenceBridge />
-      <AuthDialog />
-      <CommunityRulesDialog />
+      {idle || authDialogOpen ? <AuthDialog /> : null}
+      {idle || rulesPromptOpen ? <CommunityRulesDialog /> : null}
       <header className="app-header fixed top-0 right-0 left-0 z-40 pt-[env(safe-area-inset-top,0px)]">
         <div className="flex h-11 items-center gap-2 px-3 text-fg sm:gap-2 sm:px-4">
           <Sidebar />

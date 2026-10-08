@@ -1,109 +1,21 @@
 "use client";
-import { Eye, EyeOff, ShieldAlert, type LucideIcon } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import dynamic from "next/dynamic";
 import { useCategoryFilterStore } from "@/features/vox/categoryFilterStore";
 import { useHydrated } from "@/hooks/common/useHydrated";
-import { NSFW_CATEGORIES } from "@/lib/vox/sensitiveCategories";
-import { cn } from "@/lib/utils";
 
-const nsfwCategoryList = NSFW_CATEGORIES.join(" · ");
+// Most visitors already answered: the dialog's code only downloads for those who have not.
+const NsfwHomePromptContent = dynamic(
+  () => import("./NsfwHomePromptContent").then((m) => m.NsfwHomePromptContent),
+  { ssr: false },
+);
 
 /** First-visit prompt: the home grid mixes every category. Until it is answered, +18 categories stay off. */
 export const NsfwHomePromptDialog = () => {
   const answered = useCategoryFilterStore((s) => s.nsfwPromptAnswered);
-  const answerNsfwPrompt = useCategoryFilterStore((s) => s.answerNsfwPrompt);
   // The answer lives in localStorage: rendering only on the client keeps the server HTML from showing
   // the prompt to someone who already chose.
   const hydrated = useHydrated();
 
   if (!hydrated || answered) return null;
-
-  return (
-    <Dialog open>
-      <DialogContent
-        showClose={false}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-        className="gap-5 sm:max-w-md"
-      >
-        <DialogHeader>
-          <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-caution-500/15 text-caution-300 sm:mx-0">
-            <ShieldAlert className="size-6" aria-hidden />
-          </span>
-          <DialogTitle className="text-xl leading-snug">¿Querés ver contenido +18?</DialogTitle>
-          <DialogDescription className="text-fg-secondary">
-            Voxer tiene categorías para adultos y en el inicio van mezcladas con el resto. Elegí qué
-            hacemos con <span className="font-medium text-fg">{nsfwCategoryList}</span>.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-2">
-          <PromptOption
-            icon={EyeOff}
-            label="No, ocultarlas"
-            detail="El inicio no muestra ningún vox de esas categorías."
-            emphasis
-            onClick={() => answerNsfwPrompt(false)}
-          />
-          <PromptOption
-            icon={Eye}
-            label="Sí, mostrarlas"
-            detail="Vas a ver porno y demás contenido +18 en el inicio."
-            onClick={() => answerNsfwPrompt(true)}
-          />
-        </div>
-
-        <p className="text-xs text-fg-muted">
-          Podés cambiarlo cuando quieras desde el menú, en Categorías → NSFW.
-        </p>
-      </DialogContent>
-    </Dialog>
-  );
+  return <NsfwHomePromptContent />;
 };
-
-const PromptOption = ({
-  icon: Icon,
-  label,
-  detail,
-  emphasis = false,
-  onClick,
-}: {
-  icon: LucideIcon;
-  label: string;
-  detail: string;
-  emphasis?: boolean;
-  onClick: () => void;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={cn(
-      "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60",
-      emphasis
-        ? "border-brand-500/60 bg-brand-600 hover:bg-brand-500"
-        : "border-fg/15 bg-surface-sunken/80 hover:bg-fg/10",
-    )}
-  >
-    <Icon
-      className={cn("size-5 shrink-0", emphasis ? "text-on-solid" : "text-fg-muted")}
-      aria-hidden
-    />
-    <span className="min-w-0">
-      <span
-        className={cn("block text-sm font-semibold", emphasis ? "text-on-solid" : "text-fg-bright")}
-      >
-        {label}
-      </span>
-      <span className={cn("block text-xs", emphasis ? "text-on-solid" : "text-fg-muted")}>
-        {detail}
-      </span>
-    </span>
-  </button>
-);

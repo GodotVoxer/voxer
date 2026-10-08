@@ -1,15 +1,8 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useCallback, useMemo } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { api } from "@/features/http/apiClient";
 import { useAuthStore } from "@/features/auth/store";
 import {
@@ -18,12 +11,19 @@ import {
 } from "@/features/notifications/panelCacheStore";
 import { postMarkNotificationsReadForVox } from "@/features/notifications/api";
 import { mapUserNotificationsToVirtualRows } from "@/features/notifications/panelVirtualListRow";
-import { NotificationPanelVirtualList } from "@/components/Notifications/NotificationPanelVirtualList";
-import { DesktopPushToggle } from "@/components/Notifications/DesktopPushToggle";
-import { PushDistributorHint } from "@/components/Notifications/PushDistributorHint";
 import { useVoxPanelBellList } from "@/hooks/notifications/useVoxPanelBellList";
 import { useSettingsStore } from "@/features/settings/store";
 import { sortUnreadFirst } from "@/features/notifications/sortUnreadFirst";
+import { useIdleReady } from "@/hooks/common/useIdleReady";
+import { useOpenedOnce } from "@/hooks/common/useOpenedOnce";
+
+const NotificationsPanelDialog = dynamic(
+  () =>
+    import("@/components/Notifications/NotificationsPanelDialog").then(
+      (m) => m.NotificationsPanelDialog,
+    ),
+  { ssr: false },
+);
 
 export const NotificationsBell = () => {
   const user = useAuthStore((s) => s.user);
@@ -67,6 +67,9 @@ export const NotificationsBell = () => {
     [visibleItems],
   );
 
+  const idle = useIdleReady();
+  const opened = useOpenedOnce(open);
+
   if (!user) return null;
   const n = user.unreadNotifications;
   const badge = n > 9 ? "9+" : String(n);
@@ -90,49 +93,19 @@ export const NotificationsBell = () => {
         )}
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] border-fg/10 sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Notificaciones</DialogTitle>
-            <DialogDescription className="text-fg-muted">
-              Respuestas a tus comentarios y actividad en vox que seguís o creaste. Tocá una fila
-              para abrir el vox y marcar esas notificaciones como vistas; las del mismo vox se
-              marcan juntas.
-            </DialogDescription>
-          </DialogHeader>
-          <div
-            ref={scrollParentRef}
-            className="max-h-[50vh] overflow-y-auto overscroll-contain pr-1"
-          >
-            {loading ? (
-              <p className="py-6 text-center text-sm text-fg-subtle">Cargando…</p>
-            ) : visibleItems.length === 0 ? (
-              <p className="py-6 text-center text-sm text-fg-subtle">No hay notificaciones.</p>
-            ) : (
-              <NotificationPanelVirtualList
-                scrollParentRef={scrollParentRef}
-                items={virtualRows}
-                onNotificationActivate={onRowActivate}
-              />
-            )}
-          </div>
-          <DialogFooter className="flex-col gap-2 sm:flex-col">
-            <DesktopPushToggle enabled={open} />
-            <PushDistributorHint />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={clearBusy || visibleItems.length === 0}
-              className="w-full cursor-pointer border-danger-900/50 bg-surface-raised text-danger-200 hover:bg-danger-950/40 hover:text-fg"
-              onClick={() => {
-                runClearList(() => api.delete("/notifications"));
-              }}
-            >
-              {clearBusy ? "Limpiando…" : "Limpiar notificaciones"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {idle || opened ? (
+        <NotificationsPanelDialog
+          open={open}
+          setOpen={setOpen}
+          loading={loading}
+          clearBusy={clearBusy}
+          isEmpty={visibleItems.length === 0}
+          virtualRows={virtualRows}
+          scrollParentRef={scrollParentRef}
+          onRowActivate={onRowActivate}
+          runClearList={runClearList}
+        />
+      ) : null}
     </>
   );
 };

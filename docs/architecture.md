@@ -27,7 +27,7 @@ Dominios: `auth`, `categories` (dentro de `lib/vox`), `comments`, `format`, `htt
 - Los colores salen solo de los tokens del tema (ver [temas](theming.md)); `tests/policy/themeTokenUsage.test.ts` rechaza las clases de la paleta cruda y los colores fijos.
 - Los tests están al lado de su módulo como `*.test.ts` (Vitest). Los que revisan reglas de todo el repositorio viven en `tests/policy/`, y los helpers compartidos en `tests/utils/`. Los tests de navegador son specs de Playwright en `e2e/`, que corren contra la demo con datos simulados.
 - El código de cliente solo importa **tipos** de `@prisma/client` (ESLint lo exige): importar un valor, como un enum, mete el runtime de Prisma en el JavaScript de cada visitante.
-- Lo que arranca cerrado o es solo para staff (diálogos de las tarjetas, herramientas de moderación, la campana de denuncias) se carga con `next/dynamic` y se monta en la primera apertura (`hooks/common/useOpenedOnce.ts`), para que no pese en la hidratación de la home.
+- Lo que arranca cerrado o es solo para staff no va en el JavaScript inicial: se carga con `next/dynamic`. Los diálogos de las tarjetas y las herramientas de moderación se montan en la primera apertura (`hooks/common/useOpenedOnce.ts`). Los del header (barra lateral, búsqueda, notificaciones, categorías, login y reglas) se montan cerrados cuando el navegador queda libre (`hooks/common/useIdleReady.ts`), así ya están listos al primer toque; el botón que los abre sí carga de entrada. Para que el ahorro se mantenga, ningún componente que se renderice al cargar la home puede usar los primitivos de Radix.
 - Los comentarios explican un _por qué_ que no es obvio, y nada más.
 
 ## Anonimato
