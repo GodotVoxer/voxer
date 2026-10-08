@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUp } from "lucide-react";
+import { prefersReducedMotion } from "@/features/device/reducedMotion";
 import { useVoxStore } from "@/features/vox/store";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +22,11 @@ export const HomeFeedNewVoxBanner = () => {
           onClick={() => {
             void prependNewVoxFromServer();
             clearPendingNewVox();
+            window.scrollTo({
+              top: 0,
+              left: 0,
+              behavior: prefersReducedMotion() ? "auto" : "smooth",
+            });
           }}
         >
           <ArrowUp className="size-4" aria-hidden />
