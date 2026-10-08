@@ -58,7 +58,12 @@ class VoxerWebViewClient(private val host: WebViewHost) : WebViewClient() {
         errorResponse: WebResourceResponse,
     ) {
         if (!request.isForMainFrame) return
-        if (errorResponse.statusCode < 500) return
+        val serverFailure = MainFrameHttpError.isServerFailure(
+            statusCode = errorResponse.statusCode,
+            requestHeaders = request.requestHeaders.orEmpty(),
+            responseHeaders = errorResponse.responseHeaders.orEmpty(),
+        )
+        if (!serverFailure) return
         host.showConnectionError(request.url.toString(), offline = false)
     }
 
