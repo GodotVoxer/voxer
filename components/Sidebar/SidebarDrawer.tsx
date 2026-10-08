@@ -14,6 +14,7 @@ import { CategoryPanel } from "@/components/Header/CategoryPanel";
 import { SidebarBrandHeader } from "@/components/Sidebar/SidebarBrandHeader";
 import { SidebarNavItem } from "@/components/Sidebar/SidebarNavItem";
 import { SidebarPresenceStatus } from "@/components/Sidebar/SidebarPresenceStatus";
+import { SeasonalThemeSidebarItem } from "@/components/Theme/SeasonalThemeSidebarItem";
 import { useAuthStore } from "@/features/auth/store";
 import { useSettingsStore } from "@/features/settings/store";
 import { isStaffRole } from "@/lib/moderation/roles";
@@ -57,6 +58,7 @@ export const SidebarDrawer = ({ open, onOpenChange, triggerRef }: Props) => {
           <SidebarBrandHeader />
           <div className="px-4">
             <SidebarPresenceStatus />
+            <SeasonalThemeSidebarItem />
             <ul className="divide-y divide-fg/10">
               <li>
                 <SidebarNavItem icon={Home} label="Inicio" href="/" />

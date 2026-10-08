@@ -1,0 +1,52 @@
+import { deriveCustomThemeTokens, type CustomThemeOverrides } from "@/lib/theme/customTheme";
+import { SEASONAL_THEME_SURFACE } from "@/lib/theme/seasonalTheme";
+import type { ThemeTokenMap } from "@/lib/theme/themeTokens";
+
+/** Night violet surfaces, bone text, pumpkin accent; anon avatars and pills get the season's colors. */
+export const HALLOWEEN_OVERRIDES: CustomThemeOverrides = {
+  surface: SEASONAL_THEME_SURFACE,
+  "surface-raised": "#191222",
+  "surface-vox-detail": "#110b18",
+  "media-placeholder": "#1f1530",
+  fg: "#f5ecdc",
+  "on-solid": "#fff7ed",
+  brand: "#e8590c",
+  danger: "#c81e3a",
+  warning: "#f59e0b",
+  caution: "#d9480f",
+  success: "#4d9a0f",
+  highlight: "#eab308",
+  category: "#7c3aed",
+  special: "#9333ea",
+  vivid: "#c026d3",
+  greentext: "#9bd44a",
+  "comment-pin": "#fb923c",
+  "comment-pin-soft": "#ea580c",
+  "header-scrim": "#00000000",
+  "header-fg": "#fff1de",
+  "header-text-bg": "#140c1ee6",
+  "header-control": "#211530",
+  "header-control-border": "#5b3a78",
+  "sidebar-bg": "#120c1a",
+  "sidebar-accent": "#e8590c",
+  "sidebar-accent-fg": "#fff7ed",
+  "media-chip": "#1a1024",
+  "pill-category": "#6d28d9",
+  "pill-replies": "#7e22ce",
+  "pill-poll": "#c2410c",
+  "pill-pinned": "#a16207",
+  "pill-new": "#ea580c",
+  "media-favorite": "#fbbf24",
+  "avatar-blue": "#2e5f8a",
+  "avatar-green": "#4d8a12",
+  "avatar-red": "#9b1b30",
+  "avatar-yellow": "#e8730c",
+  "avatar-pink": "#7e3bb5",
+  "avatar-brown": "#5a3a22",
+  "avatar-white": "#e8e0d0",
+  "avatar-black": "#0a0608",
+  "avatar-gray": "#4b4453",
+  "staff-crown": "#fb923c",
+};
+
+export const HALLOWEEN_TOKENS: ThemeTokenMap = deriveCustomThemeTokens("dark", HALLOWEEN_OVERRIDES);

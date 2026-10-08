@@ -7,6 +7,11 @@ import type {
   ThemeAssetQuota,
 } from "@/lib/theme/customTheme";
 import {
+  isSeasonalThemeAvailable,
+  readSeasonalThemeActive,
+  writeSeasonalThemeChoice,
+} from "@/lib/theme/seasonalTheme";
+import {
   DEFAULT_THEME_PREFERENCE,
   isBuiltinThemePreference,
   readStoredDeviceThemePreference,
@@ -37,6 +42,10 @@ type ThemeState = {
   customTheme: CustomThemeDto | null;
   /** Cached custom theme (base + variables) the inline script painted with. */
   cachedCustom: StoredCustomTheme | null;
+  /** Within the seasonal window: the sidebar offers the switch. */
+  seasonalThemeAvailable: boolean;
+  /** Seasonal theme painted over the preference (within its window and not turned off on this device). */
+  seasonalThemeActive: boolean;
   /** Editor draft, previewed on top of everything until saved or discarded. */
   draft: CustomThemeInput | null;
   /** The account's custom themes; null when not loaded. */
@@ -48,6 +57,10 @@ type ThemeState = {
 
   hydrate: (stored: StoredThemeState, systemPrefersLight: boolean) => void;
   setSystemPrefersLight: (systemPrefersLight: boolean) => void;
+  /** Reads the window and the device's choice, without recording a choice. */
+  refreshSeasonalTheme: (now: number) => void;
+  /** Explicit choice from the sidebar; any other theme choice turns it off too. */
+  chooseSeasonalTheme: (enabled: boolean) => void;
   /** Explicit choice of a builtin mode (sidebar selector). */
   setPreference: (preference: BuiltinThemePreference) => void;
   /** Explicit choice of an own custom theme. */
@@ -66,6 +79,13 @@ type ThemeState = {
   setThemeAssets: (assets: ThemeAssetDto[], quota: ThemeAssetQuota) => void;
 };
 
+/** Choosing another theme while the seasonal one is showing means leaving it. */
+const leaveSeasonalTheme = (active: boolean): Partial<ThemeState> => {
+  if (!active) return {};
+  writeSeasonalThemeChoice(false);
+  return { seasonalThemeActive: false };
+};
+
 const sameSelection = (a: ThemeSelection | null, b: ThemeSelection): boolean =>
   a !== null &&
   a.mode === b.mode &&
@@ -79,6 +99,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   pendingServerSync: null,
   customTheme: null,
   cachedCustom: null,
+  seasonalThemeAvailable: false,
+  seasonalThemeActive: false,
   draft: null,
   customThemes: null,
   editor: null,
@@ -94,8 +116,19 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     }),
   setSystemPrefersLight: (systemPrefersLight) => set({ systemPrefersLight }),
 
+  refreshSeasonalTheme: (now) =>
+    set({
+      seasonalThemeAvailable: isSeasonalThemeAvailable(now),
+      seasonalThemeActive: readSeasonalThemeActive(now),
+    }),
+
+  chooseSeasonalTheme: (enabled) => {
+    writeSeasonalThemeChoice(enabled);
+    set({ seasonalThemeActive: enabled });
+  },
+
   setPreference: (preference) => {
-    const { accountBound } = get();
+    const { accountBound, seasonalThemeActive } = get();
     writeStoredThemePreference(preference);
     if (!accountBound) writeStoredDeviceThemePreference(preference);
     set({
@@ -103,6 +136,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       customTheme: null,
       cachedCustom: null,
       pendingServerSync: accountBound ? { mode: preference } : null,
+      ...leaveSeasonalTheme(seasonalThemeActive),
     });
   },
 
@@ -111,6 +145,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       preference: "custom",
       customTheme: theme,
       pendingServerSync: { mode: "custom", themeId: theme.id },
+      ...leaveSeasonalTheme(get().seasonalThemeActive),
     }),
 
   adoptSelection: (mode, customTheme) => {

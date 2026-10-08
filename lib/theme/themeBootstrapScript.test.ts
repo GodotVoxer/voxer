@@ -1,9 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  SEASONAL_THEME_ENDS_AT,
+  SEASONAL_THEME_STORAGE_KEY,
+  serializeSeasonalThemeChoice,
+} from "./seasonalTheme";
 import { THEME_BOOTSTRAP_SCRIPT } from "./themeBootstrapScript";
 import { CUSTOM_VARS_MAX, THEME_STORAGE_KEY } from "./themePreference";
 
+const OUTSIDE_SEASON = new Date("2026-01-15T15:00:00.000Z");
+const IN_SEASON = new Date("2026-10-31T23:00:00.000Z");
+
 type RunOptions = {
   stored?: string | null;
+  seasonal?: string | null;
   systemLight?: boolean;
   storageThrows?: boolean;
   search?: string;
@@ -11,6 +20,7 @@ type RunOptions = {
 
 const runBootstrap = ({
   stored = null,
+  seasonal = null,
   systemLight = false,
   storageThrows = false,
   search = "",
@@ -34,6 +44,7 @@ const runBootstrap = ({
   const localStorageStub = {
     getItem: (key: string) => {
       if (storageThrows) throw new Error("SecurityError");
+      if (key === SEASONAL_THEME_STORAGE_KEY) return seasonal;
       return key === THEME_STORAGE_KEY ? stored : null;
     },
   };
@@ -51,6 +62,7 @@ const runBootstrap = ({
     dark: classes.has("dark"),
     colorScheme: documentStub.documentElement.style.colorScheme,
     custom: attributes.get("data-theme-custom"),
+    seasonal: attributes.get("data-seasonal-theme"),
     properties: Object.fromEntries(properties),
   };
 };
@@ -62,12 +74,22 @@ const customCache = (
 ) => JSON.stringify({ mode: "custom", custom: { id: "cltheme1", base, vars, headerBackground } });
 
 describe("THEME_BOOTSTRAP_SCRIPT", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(OUTSIDE_SEASON);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("keeps dark without a stored preference", () => {
     expect(runBootstrap({})).toEqual({
       theme: "dark",
       dark: true,
       colorScheme: "dark",
       custom: undefined,
+      seasonal: undefined,
       properties: {},
     });
   });
@@ -153,5 +175,51 @@ describe("THEME_BOOTSTRAP_SCRIPT", () => {
 
   it("does not throw when storage is blocked", () => {
     expect(runBootstrap({ storageThrows: true }).theme).toBe("dark");
+  });
+
+  describe("seasonal theme", () => {
+    beforeEach(() => {
+      vi.setSystemTime(IN_SEASON);
+    });
+
+    it("covers the stored theme without touching it and skips custom variables", () => {
+      const result = runBootstrap({ stored: customCache({ fg: "#101010" }) });
+      expect(result).toMatchObject({
+        theme: "dark",
+        dark: true,
+        colorScheme: "dark",
+        seasonal: "halloween",
+        custom: "true",
+        properties: {},
+      });
+    });
+
+    it("respects turning it off on this device", () => {
+      const result = runBootstrap({
+        stored: '{"mode":"light"}',
+        seasonal: serializeSeasonalThemeChoice(false),
+      });
+      expect(result.theme).toBe("light");
+      expect(result.seasonal).toBeUndefined();
+    });
+
+    it("ignores a choice from another season or a corrupt one", () => {
+      expect(runBootstrap({ seasonal: '{"id":"halloween-2025","enabled":false}' }).seasonal).toBe(
+        "halloween",
+      );
+      expect(runBootstrap({ seasonal: "{" }).seasonal).toBe("halloween");
+    });
+
+    it("ends at the end of the window", () => {
+      vi.setSystemTime(SEASONAL_THEME_ENDS_AT);
+      expect(runBootstrap({ stored: '{"mode":"light"}' })).toMatchObject({
+        theme: "light",
+        seasonal: undefined,
+      });
+    });
+
+    it("stays out with ?tema=seguro", () => {
+      expect(runBootstrap({ search: "?tema=seguro" }).seasonal).toBeUndefined();
+    });
   });
 });

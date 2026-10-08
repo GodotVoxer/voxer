@@ -25,6 +25,7 @@ export const SidebarThemeSection = () => {
   const customTheme = useThemeStore((s) => s.customTheme);
   const cachedCustom = useThemeStore((s) => s.cachedCustom);
   const customThemes = useThemeStore((s) => s.customThemes);
+  const seasonal = useThemeStore((s) => s.seasonalThemeActive);
   const setPreference = useThemeStore((s) => s.setPreference);
   const selectCustomTheme = useThemeStore((s) => s.selectCustomTheme);
   const setCustomThemes = useThemeStore((s) => s.setCustomThemes);
@@ -47,8 +48,10 @@ export const SidebarThemeSection = () => {
     };
   }, [user, customThemes, setCustomThemes]);
 
-  const selectedIndex = THEME_OPTIONS.findIndex((o) => o.value === preference);
-  const activeCustomId = preference === "custom" ? (customTheme?.id ?? cachedCustom?.id) : null;
+  // The seasonal theme covers the preference: nothing underneath shows as selected.
+  const selectedIndex = seasonal ? -1 : THEME_OPTIONS.findIndex((o) => o.value === preference);
+  const activeCustomId =
+    preference === "custom" && !seasonal ? (customTheme?.id ?? cachedCustom?.id) : null;
   const currentBase = resolveThemePreference(
     preference,
     systemPrefersLight,
@@ -82,7 +85,7 @@ export const SidebarThemeSection = () => {
         className="mt-1 grid grid-cols-3 gap-1 rounded-lg border border-fg/15 bg-surface-sunken/80 p-1"
       >
         {THEME_OPTIONS.map(({ value, label, icon: Icon }, index) => {
-          const selected = preference === value;
+          const selected = index === selectedIndex;
           return (
             <button
               key={value}

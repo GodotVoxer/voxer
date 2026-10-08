@@ -30,7 +30,13 @@ export const CommentAnonAvatar = ({ variant, size = "md", className }: Props) =>
     const stripes = stripeColorsForVariant(variant);
     const doubled = [...stripes, ...stripes];
     return (
-      <div className={cn("relative shrink-0 overflow-hidden", sizeBox[size], className)}>
+      <div
+        className={cn(
+          "comment-anon-avatar relative shrink-0 overflow-hidden",
+          sizeBox[size],
+          className,
+        )}
+      >
         <div className="comment-anon-avatar-stripes-track absolute left-0 top-0 flex h-[200%] w-full flex-col">
           {doubled.map((bg, i) => (
             <div
@@ -54,7 +60,7 @@ export const CommentAnonAvatar = ({ variant, size = "md", className }: Props) =>
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center font-bold uppercase tracking-tight",
+        "comment-anon-avatar flex shrink-0 items-center justify-center font-bold uppercase tracking-tight",
         sizeBox[size],
         sizeLabel[size],
         avatarClass(variant),

@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { HalloweenBrandBanner } from "@/components/Theme/HalloweenBrandBanner";
 import { DrawerClose } from "@/components/ui/drawer";
+import { useThemeStore } from "@/features/theme/store";
 import {
   SIDEBAR_BRAND_LOGO_BOX_HEIGHT,
   SIDEBAR_BRAND_LOGO_SAFE_OBJECT_POSITION,
@@ -10,6 +12,7 @@ import {
 } from "@/features/theme/sidebarBrandLogoCrop";
 
 export const SidebarBrandHeader = () => {
+  const seasonal = useThemeStore((s) => s.seasonalThemeActive);
   return (
     <DrawerClose asChild>
       <Link
@@ -21,23 +24,29 @@ export const SidebarBrandHeader = () => {
           className="relative w-full overflow-hidden"
           style={{ height: SIDEBAR_BRAND_LOGO_BOX_HEIGHT }}
         >
-          {/* Picked by CSS (the `dark` class on <html>), independent of hydration; the hidden image is not downloaded. */}
-          <Image
-            src={SIDEBAR_BRAND_LOGO_URL.dark}
-            alt=""
-            fill
-            className="hidden object-cover dark:block"
-            style={{ objectPosition: SIDEBAR_BRAND_LOGO_SAFE_OBJECT_POSITION }}
-            sizes="320px"
-          />
-          <Image
-            src={SIDEBAR_BRAND_LOGO_URL.light}
-            alt=""
-            fill
-            className="block object-cover dark:hidden"
-            style={{ objectPosition: SIDEBAR_BRAND_LOGO_SAFE_OBJECT_POSITION }}
-            sizes="320px"
-          />
+          {seasonal ? (
+            <HalloweenBrandBanner />
+          ) : (
+            <>
+              {/* Picked by CSS (the `dark` class on <html>), independent of hydration; the hidden image is not downloaded. */}
+              <Image
+                src={SIDEBAR_BRAND_LOGO_URL.dark}
+                alt=""
+                fill
+                className="hidden object-cover dark:block"
+                style={{ objectPosition: SIDEBAR_BRAND_LOGO_SAFE_OBJECT_POSITION }}
+                sizes="320px"
+              />
+              <Image
+                src={SIDEBAR_BRAND_LOGO_URL.light}
+                alt=""
+                fill
+                className="block object-cover dark:hidden"
+                style={{ objectPosition: SIDEBAR_BRAND_LOGO_SAFE_OBJECT_POSITION }}
+                sizes="320px"
+              />
+            </>
+          )}
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-surface-raised via-surface-raised/70 to-transparent"
             aria-hidden

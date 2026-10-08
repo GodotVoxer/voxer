@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { BUILTIN_THEMES, type BuiltinTheme } from "@/lib/theme/builtinThemes";
+import { HALLOWEEN_TOKENS } from "@/lib/theme/halloweenTheme";
+import { SEASONAL_THEME_NAME } from "@/lib/theme/seasonalTheme";
 import { THEME_TOKEN_KEYS } from "@/lib/theme/themeTokens";
 
 export const GLOBALS_CSS_PATH = "app/globals.css";
@@ -35,6 +37,12 @@ export const buildThemesCss = (): string =>
     ...themeBlock([":root", '[data-theme="dark"]'], BUILTIN_THEMES.dark),
     "",
     ...themeBlock(['[data-theme="light"]'], BUILTIN_THEMES.light),
+    "",
+    // `:root` raises specificity over the dark block; subtrees with their own `data-theme` (the theme editor) keep their base.
+    ...themeBlock([`:root[data-seasonal-theme="${SEASONAL_THEME_NAME}"]`], {
+      ...BUILTIN_THEMES.dark,
+      tokens: HALLOWEEN_TOKENS,
+    }),
     "",
     "@theme inline {",
     ...THEME_TOKEN_KEYS.map((key) => `  --color-${key}: var(--${key});`),

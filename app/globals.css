@@ -323,6 +323,162 @@
   --data-hue-text-l: 34%;
 }
 
+:root[data-seasonal-theme="halloween"] {
+  color-scheme: dark;
+  --voxer-theme-revision: "d94fcc7922bed67f";
+  --surface: #0c0812;
+  --surface-sunken: #0c0812;
+  --surface-raised: #191222;
+  --surface-muted: #17121c;
+  --surface-elevated: #27202f;
+  --surface-strong: #3e3743;
+  --surface-vox-detail: #110b18;
+  --surface-toolbar: #18121f;
+  --media-placeholder: #1f1530;
+  --fg: #f5ecdc;
+  --fg-bright: #ede4d6;
+  --fg-soft: #e1d8cc;
+  --fg-secondary: #d2c9bf;
+  --fg-muted: #a09896;
+  --fg-subtle: #797175;
+  --fg-faint: #5b535c;
+  --shade: #000;
+  --on-solid: #fff7ed;
+  --greentext: #9bd44a;
+  --glow: #ff8446;
+  --glow-deep: #ff6f25;
+  --pinned-glow: #ffac06;
+  --pinned-glow-soft: #ffb739;
+  --comment-pin: #fb923c;
+  --comment-pin-soft: #ea580c;
+  --header-scrim: #00000000;
+  --header-fg: #fff1de;
+  --header-text-bg: #140c1ee6;
+  --header-control: #211530;
+  --header-control-border: #5b3a78;
+  --sidebar-bg: #120c1a;
+  --sidebar-fg: #f0e7d8;
+  --sidebar-muted: #a09896;
+  --sidebar-accent: #e8590c;
+  --sidebar-accent-fg: #fff7ed;
+  --on-media: #fff;
+  --media-scrim: #000;
+  --media-chip: #1a1024;
+  --pill-category: #6d28d9;
+  --pill-replies: #7e22ce;
+  --pill-poll: #c2410c;
+  --pill-pinned: #a16207;
+  --pill-new: #ea580c;
+  --pill-youtube: oklch(57.7% 0.245 27.325);
+  --media-favorite: #fbbf24;
+  --media-danger: oklch(63.7% 0.237 25.331);
+  --media-pin: oklch(87.9% 0.169 91.605);
+  --media-history: oklch(75% 0.183 55.934);
+  --avatar-blue: #2e5f8a;
+  --avatar-green: #4d8a12;
+  --avatar-red: #9b1b30;
+  --avatar-yellow: #e8730c;
+  --avatar-pink: #7e3bb5;
+  --avatar-brown: #5a3a22;
+  --avatar-white: #e8e0d0;
+  --avatar-black: #0a0608;
+  --avatar-gray: #4b4453;
+  --staff-flash-a: rgb(30 64 175);
+  --staff-flash-b: rgb(185 28 28);
+  --staff-crown: #fb923c;
+  --brand-100: #ffe8df;
+  --brand-200: #ffd2bd;
+  --brand-300: #ffae86;
+  --brand-400: #ff8446;
+  --brand-500: #ff6f25;
+  --brand-600: #e8590c;
+  --brand-700: #b84403;
+  --brand-800: #963b10;
+  --brand-900: #793112;
+  --brand-950: #4c1b06;
+  --danger-100: #ffe7e6;
+  --danger-200: #ffc9c8;
+  --danger-300: #ff9a9b;
+  --danger-400: #ff626d;
+  --danger-500: #f64255;
+  --danger-600: #c81e3a;
+  --danger-700: #a31a2f;
+  --danger-800: #881f2b;
+  --danger-900: #712027;
+  --danger-950: #4e161a;
+  --warning-100: #fbecdc;
+  --warning-200: #ffe0bb;
+  --warning-300: #ffcd83;
+  --warning-400: #ffb739;
+  --warning-500: #ffac06;
+  --warning-600: #f59e0b;
+  --warning-700: #bd7600;
+  --warning-800: #975f04;
+  --warning-900: #764b08;
+  --warning-950: #412500;
+  --caution-100: #ffe8e0;
+  --caution-200: #ffd0be;
+  --caution-300: #ffa887;
+  --caution-400: #ff7a4a;
+  --caution-500: #ff612b;
+  --caution-600: #d9480f;
+  --caution-700: #ae3809;
+  --caution-800: #8f3213;
+  --caution-900: #752c14;
+  --caution-950: #4c1a0a;
+  --success-100: #e6f4e0;
+  --success-200: #cdeabf;
+  --success-300: #a4dc89;
+  --success-400: #79ca4b;
+  --success-500: #64b82c;
+  --success-600: #4d9a0f;
+  --success-700: #3b7a08;
+  --success-800: #346513;
+  --success-900: #2c5315;
+  --success-950: #1a340a;
+  --highlight-100: #f7eedb;
+  --highlight-200: #f9e6bb;
+  --highlight-300: #ffd882;
+  --highlight-400: #ffc934;
+  --highlight-500: #fbbf00;
+  --highlight-600: #eab308;
+  --highlight-700: #b38600;
+  --highlight-800: #8e6b00;
+  --highlight-900: #6f5305;
+  --highlight-950: #3b2900;
+  --category-100: #efeaff;
+  --category-200: #ded2ff;
+  --category-300: #c7a9ff;
+  --category-400: #b079ff;
+  --category-500: #9d5cff;
+  --category-600: #7c3aed;
+  --category-700: #6430c1;
+  --category-800: #552e9f;
+  --category-900: #472b83;
+  --category-950: #301d5a;
+  --special-100: #f4e9ff;
+  --special-200: #e8cfff;
+  --special-300: #daa4ff;
+  --special-400: #c871ff;
+  --special-500: #b553ff;
+  --special-600: #9333ea;
+  --special-700: #7729be;
+  --special-800: #632a9c;
+  --special-900: #522780;
+  --special-950: #371a56;
+  --vivid-100: #fde6ff;
+  --vivid-200: #fdcaff;
+  --vivid-300: #fe9cff;
+  --vivid-400: #f763ff;
+  --vivid-500: #e544fa;
+  --vivid-600: #c026d3;
+  --vivid-700: #9a1da9;
+  --vivid-800: #7f218b;
+  --vivid-900: #682072;
+  --vivid-950: #44134a;
+  --data-hue-text-l: 72%;
+}
+
 @theme inline {
   --color-surface: var(--surface);
   --color-surface-sunken: var(--surface-sunken);
@@ -557,6 +713,145 @@
   --on-solid: var(--sidebar-accent-fg);
   background: var(--sidebar-bg);
   color: var(--sidebar-fg);
+}
+
+/* Seasonal theme (lib/theme/seasonalTheme.ts): tokens come from the generated block; shapes are masks so color stays in tokens. */
+:root[data-seasonal-theme="halloween"] {
+  --seasonal-header-top: env(safe-area-inset-top, 0px);
+  --seasonal-moon-x: 168px;
+  --theme-header-background:
+    radial-gradient(
+      circle at var(--seasonal-moon-x) calc(var(--seasonal-header-top) + 21px),
+      var(--highlight-100) 0 9px,
+      color-mix(in oklab, var(--highlight-300) 45%, transparent) 10.5px,
+      transparent 34px
+    ),
+    linear-gradient(
+      100deg,
+      var(--special-950) 0%,
+      color-mix(in oklab, var(--special-950) 55%, var(--surface)) 45%,
+      color-mix(in oklab, var(--brand-950) 70%, var(--special-950)) 82%,
+      var(--brand-900) 100%
+    );
+}
+
+:root[data-seasonal-theme="halloween"] body {
+  background-image:
+    radial-gradient(
+      ellipse 90% 50% at 50% 115%,
+      color-mix(in oklab, var(--special-800) 55%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 50% 35% at 0% 0%,
+      color-mix(in oklab, var(--brand-900) 45%, transparent),
+      transparent 70%
+    );
+  background-attachment: fixed;
+}
+
+:root[data-seasonal-theme="halloween"] main {
+  background-color: transparent;
+}
+
+:root[data-seasonal-theme="halloween"] body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--fg);
+  content: "";
+  mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='none' stroke='black' stroke-width='0.5' d='M100 100L-29.5 88.7M100 100L-20.5 51.3M100 100L0.4 16.4M100 100L31.1 -10.2M100 100L68.6 -26.1M100 100L95.5 -29.9M88.0 99.0Q90.5 97.7 88.9 95.5Q91.7 95.0 90.8 92.3Q93.6 92.7 93.6 89.8Q96.2 91.1 97.1 88.4Q98.6 90.3 99.6 88.0M76.1 97.9Q81.1 95.5 77.7 91.0Q83.3 90.0 81.6 84.6Q87.2 85.3 87.3 79.6Q92.4 82.1 94.2 76.7Q97.3 80.6 99.2 76.0M62.1 96.7Q70.0 92.8 64.8 85.8Q73.6 84.1 70.9 75.6Q79.8 76.8 79.9 67.8Q88.0 71.7 90.8 63.1Q95.7 69.3 98.7 62.0M46.2 95.3Q57.4 89.8 49.9 79.8Q62.5 77.5 58.6 65.3Q71.3 67.0 71.4 54.2Q82.9 59.7 86.9 47.6Q93.9 56.4 98.1 46.0M28.3 93.7Q43.2 86.4 33.2 73.0Q50.0 70.0 44.8 53.7Q61.7 56.0 61.8 38.9Q77.2 46.3 82.6 30.1Q91.8 41.9 97.5 28.0M6.4 91.8Q25.9 82.2 12.8 64.8Q34.7 60.8 28.0 39.6Q50.1 42.5 50.2 20.3Q70.3 29.9 77.3 8.8Q89.3 24.1 96.7 6.1'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='none' stroke='black' stroke-width='0.7' d='M0 0L129.5 11.3M0 0L120.5 48.7M0 0L99.6 83.6M0 0L68.9 110.2M0 0L31.4 126.1M0 0L4.5 129.9M13.9 1.2Q11.0 2.7 13.0 5.2Q9.7 5.8 10.7 9.0Q7.4 8.6 7.4 11.9Q4.4 10.4 3.4 13.6Q1.6 11.3 0.5 14.0M27.9 2.4Q22.1 5.3 26.0 10.5Q19.4 11.7 21.4 18.0Q14.9 17.1 14.8 23.7Q8.9 20.9 6.8 27.2Q3.2 22.6 1.0 28.0M43.8 3.8Q34.7 8.3 40.8 16.5Q30.5 18.4 33.7 28.3Q23.4 26.9 23.3 37.3Q13.9 32.8 10.6 42.7Q5.0 35.5 1.5 44.0M61.8 5.4Q48.9 11.7 57.5 23.2Q43.0 25.9 47.5 39.9Q32.9 37.9 32.9 52.6Q19.6 46.2 15.0 60.2Q7.0 50.1 2.2 62.0M81.7 7.1Q64.7 15.5 76.0 30.7Q56.9 34.2 62.8 52.7Q43.6 50.1 43.5 69.5Q25.9 61.1 19.8 79.6Q9.3 66.2 2.9 82.0M42 31V68M40.5 71Q35 66 32 69M40 74Q33 72 30 76M40 77Q33 79 31 84M40.5 80Q36 84 36 89M43.5 71Q49 66 52 69M44 74Q51 72 54 76M44 77Q51 79 53 84M43.5 80Q48 84 48 89'/%3E%3Ccircle cx='42' cy='69' r='2.6'/%3E%3Cellipse cx='42' cy='76' rx='4' ry='5.2'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 60'%3E%3Cpath d='M0 4Q3 1 6 3Q7 1 9 2L10 0L11 2L12 1.5L13 2L14 0L15 2Q17 1 18 3Q21 1 24 4Q21 4 20 7Q18 5 16 7Q14 5.5 12 9Q10 5.5 8 7Q6 5 4 7Q3 4 0 4Z' transform='translate(0 22) scale(1.6)'/%3E%3Cpath d='M0 4Q3 1 6 3Q7 1 9 2L10 0L11 2L12 1.5L13 2L14 0L15 2Q17 1 18 3Q21 1 24 4Q21 4 20 7Q18 5 16 7Q14 5.5 12 9Q10 5.5 8 7Q6 5 4 7Q3 4 0 4Z' transform='translate(52 4) rotate(-14) scale(1.1)'/%3E%3Cpath d='M0 4Q3 1 6 3Q7 1 9 2L10 0L11 2L12 1.5L13 2L14 0L15 2Q17 1 18 3Q21 1 24 4Q21 4 20 7Q18 5 16 7Q14 5.5 12 9Q10 5.5 8 7Q6 5 4 7Q3 4 0 4Z' transform='translate(88 34) rotate(12) scale(0.8)'/%3E%3Cpath d='M0 4Q3 1 6 3Q7 1 9 2L10 0L11 2L12 1.5L13 2L14 0L15 2Q17 1 18 3Q21 1 24 4Q21 4 20 7Q18 5 16 7Q14 5.5 12 9Q10 5.5 8 7Q6 5 4 7Q3 4 0 4Z' transform='translate(46 44) rotate(6) scale(0.55)'/%3E%3C/svg%3E");
+  mask-position:
+    right bottom,
+    left 0 top var(--app-header-offset),
+    right 9% top 25%;
+  mask-size:
+    min(80vw, 40rem) auto,
+    min(30vw, 12rem) auto,
+    min(30vw, 11rem) auto;
+  mask-repeat: no-repeat;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+:root[data-seasonal-theme="halloween"] body::after {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  height: 7.5rem;
+  background: var(--shade);
+  content: "";
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0 120V100Q150 86 300 96T600 94T900 98T1200 92V120ZM96 99V76Q107 62 118 76V99ZM150 99V84Q158 76 166 84V99ZM376 99V70H368V64H376V54H383V64H391V70H383V99ZM430 99V80Q439 70 448 80V99ZM716 99V72Q728 56 740 72V99ZM786 99V76H779V71H786V62H792V71H799V76H792V99ZM960 99V82Q969 72 978 82V99ZM1010 99V88Q1016 82 1022 88V99ZM518 78H664V81H518ZM518 90H664V93H518ZM524 98V68L526 63L528 68V98ZM536 98V68L538 63L540 68V98ZM548 98V68L550 63L552 68V98ZM560 98V68L562 63L564 68V98ZM572 98V68L574 63L576 68V98ZM584 98V68L586 63L588 68V98ZM596 98V68L598 63L600 68V98ZM608 98V68L610 63L612 68V98ZM620 98V68L622 63L624 68V98ZM632 98V68L634 63L636 68V98ZM644 98V68L646 63L648 68V98ZM656 98V68L658 63L660 68V98ZM260 98C264 84 266 66 264 50C260 44 252 40 244 42C252 38 259 40 264 44C264 36 260 28 254 24C261 27 265 33 267 40C269 30 274 24 282 22C276 26 271 33 270 44C273 40 280 38 286 40C279 41 273 45 271 52C270 68 272 84 276 98ZM1120 98C1116 81.2 1114 59.6 1116 40.4C1120 33.2 1128 28.4 1136 30.8C1128 26 1121 28.4 1116 33.2C1116 23.6 1120 14 1126 9.2C1119 12.8 1115 20 1113 28.4C1111 16.4 1106 9.2 1098 6.8C1104 11.6 1109 20 1110 33.2C1107 28.4 1100 26 1094 28.4C1101 29.6 1107 34.4 1109 42.8C1110 62 1108 81.2 1104 98Z'/%3E%3C/svg%3E");
+  mask-position: center bottom;
+  mask-size: auto 100%;
+  mask-repeat: repeat-x;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+:root[data-seasonal-theme="halloween"] .app-header {
+  border-bottom: 2px solid var(--brand-700);
+}
+
+:root[data-seasonal-theme="halloween"] .app-header::after {
+  position: absolute;
+  inset: 0 0 -14px;
+  z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    var(--shade) 0 calc(100% - 14px),
+    var(--brand-700) calc(100% - 14px)
+  );
+  content: "";
+  mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 34'%3E%3Cpath id='b' d='M0 4Q3 1 6 3Q7 1 9 2L10 0L11 2L12 1.5L13 2L14 0L15 2Q17 1 18 3Q21 1 24 4Q21 4 20 7Q18 5 16 7Q14 5.5 12 9Q10 5.5 8 7Q6 5 4 7Q3 4 0 4Z' transform='translate(0 12) scale(1.15)'/%3E%3Cpath d='M0 4Q3 1 6 3Q7 1 9 2L10 0L11 2L12 1.5L13 2L14 0L15 2Q17 1 18 3Q21 1 24 4Q21 4 20 7Q18 5 16 7Q14 5.5 12 9Q10 5.5 8 7Q6 5 4 7Q3 4 0 4Z' transform='translate(32 2) rotate(-12) scale(0.8)'/%3E%3Cpath d='M0 4Q3 1 6 3Q7 1 9 2L10 0L11 2L12 1.5L13 2L14 0L15 2Q17 1 18 3Q21 1 24 4Q21 4 20 7Q18 5 16 7Q14 5.5 12 9Q10 5.5 8 7Q6 5 4 7Q3 4 0 4Z' transform='translate(56 18) rotate(10) scale(0.6)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0H120V3C116 3 115 4 115 7C115 10 112 10 112 7C112 4 108 3 100 3C94 3 93 4 93 9C93 14 89 14 89 9C89 4 86 3 76 3C70 3 69 4 69 6C69 8 66 8 66 6C66 4 63 3 50 3C43 3 42 4 42 11C42 16 37 16 37 11C37 4 34 3 24 3C18 3 17 4 17 7C17 10 13 10 13 7C13 4 10 3 0 3Z'/%3E%3C/svg%3E");
+  mask-position:
+    196px calc(var(--seasonal-header-top) + 5px),
+    left bottom;
+  mask-size:
+    72px 34px,
+    120px 14px;
+  mask-repeat: no-repeat, repeat-x;
+  pointer-events: none;
+}
+
+@media (max-width: 40rem) {
+  :root[data-seasonal-theme="halloween"] {
+    --seasonal-moon-x: 146px;
+  }
+
+  :root[data-seasonal-theme="halloween"] .app-header::after {
+    mask-position:
+      166px calc(var(--seasonal-header-top) + 4px),
+      left bottom;
+    mask-size:
+      56px 26px,
+      120px 14px;
+  }
+}
+
+:root[data-seasonal-theme="halloween"] .app-header-brand {
+  font-family: var(--font-spooky), var(--font-geist-sans), sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--brand-400);
+  text-shadow:
+    0 0 10px color-mix(in oklab, var(--brand-500) 75%, transparent),
+    0 2px 0 var(--shade);
+}
+
+:root[data-seasonal-theme="halloween"] .comment-anon-avatar {
+  border-radius: 0;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M1 21C1 8 10 1 22 1C34 1 43 8 43 21V40Q39.5 45 36 40Q32.5 35 29 40Q25.5 45 22 40Q18.5 35 15 40Q11.5 45 8 40Q4.5 35 1 40Z'/%3E%3C/svg%3E");
+  mask-position: center;
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
 }
 
 @custom-variant dark (&:is(.dark *));

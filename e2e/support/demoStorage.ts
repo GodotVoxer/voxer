@@ -2,6 +2,10 @@ import type { BrowserContext, Page } from "@playwright/test";
 import { CATEGORY_FILTER_STORAGE_KEY } from "../../features/vox/categoryFilterStore";
 import { SETTINGS_STORAGE_KEY } from "../../features/settings/store";
 import {
+  SEASONAL_THEME_STORAGE_KEY,
+  serializeSeasonalThemeChoice,
+} from "../../lib/theme/seasonalTheme";
+import {
   serializeThemePreference,
   THEME_STORAGE_KEY,
   type BuiltinThemePreference,
@@ -13,6 +17,8 @@ type DemoSeed = {
   /** Demo account the MSW backend impersonates; USER when omitted. */
   role?: DemoRole;
   theme?: BuiltinThemePreference;
+  /** The seasonal theme starts off so specs do not depend on the date; only its own spec turns it on. */
+  seasonal?: boolean;
   /** false simulates an account created before the community rules existed. */
   rulesAccepted?: boolean;
   /**
@@ -29,12 +35,14 @@ const persisted = (state: Record<string, unknown>) => JSON.stringify({ state, ve
 const demoStorageEntries = ({
   role,
   theme,
+  seasonal = false,
   rulesAccepted,
   nsfwPromptAnswered = true,
   settings,
 }: DemoSeed = {}): Record<string, string> => ({
   ...(role ? { "voxer:msw-demo-role": role } : {}),
   ...(theme ? { [THEME_STORAGE_KEY]: serializeThemePreference(theme) } : {}),
+  ...(seasonal ? {} : { [SEASONAL_THEME_STORAGE_KEY]: serializeSeasonalThemeChoice(false) }),
   ...(rulesAccepted !== undefined
     ? { "voxer:msw-demo-rules-accepted": String(rulesAccepted) }
     : {}),

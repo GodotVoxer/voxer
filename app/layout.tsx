@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Creepster, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header/Header";
 import { getSitePublicOriginUrl } from "@/lib/http/sitePublicOrigin";
@@ -12,6 +12,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+/** Seasonal theme lettering; not preloaded, so it only downloads when an element uses it. */
+const spooky = Creepster({
+  variable: "--font-spooky",
+  weight: "400",
+  subsets: ["latin"],
+  preload: false,
 });
 const siteOrigin = getSitePublicOriginUrl();
 
@@ -41,7 +48,9 @@ const RootLayout = ({
         {/* Without JS the server's dark theme stays; with JS the stored theme applies before the first paint. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${spooky.variable} antialiased`}
+      >
         <Header />
         {children}
       </body>

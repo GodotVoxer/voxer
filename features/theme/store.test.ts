@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CustomThemeDto } from "@/lib/theme/customTheme";
+import {
+  SEASONAL_THEME_STORAGE_KEY,
+  serializeSeasonalThemeChoice,
+} from "@/lib/theme/seasonalTheme";
 import { THEME_DEVICE_STORAGE_KEY, THEME_STORAGE_KEY } from "@/lib/theme/themePreference";
 import { useThemeStore } from "./store";
 
@@ -34,6 +38,8 @@ describe("useThemeStore", () => {
       pendingServerSync: null,
       customTheme: null,
       cachedCustom: null,
+      seasonalThemeAvailable: false,
+      seasonalThemeActive: false,
       draft: null,
       customThemes: null,
       editor: null,
@@ -144,6 +150,56 @@ describe("useThemeStore", () => {
       customThemes: null,
       draft: null,
       editor: null,
+    });
+  });
+
+  describe("seasonal theme", () => {
+    it("choosing a builtin mode leaves it and is remembered on the device", () => {
+      useThemeStore.setState({ seasonalThemeActive: true });
+      useThemeStore.getState().setPreference("light");
+      expect(useThemeStore.getState()).toMatchObject({
+        preference: "light",
+        seasonalThemeActive: false,
+      });
+      expect(stored.get(SEASONAL_THEME_STORAGE_KEY)).toBe(serializeSeasonalThemeChoice(false));
+    });
+
+    it("choosing a custom theme leaves it", () => {
+      useThemeStore.setState({ seasonalThemeActive: true });
+      useThemeStore.getState().selectCustomTheme(theme());
+      expect(useThemeStore.getState().seasonalThemeActive).toBe(false);
+      expect(stored.get(SEASONAL_THEME_STORAGE_KEY)).toBe(serializeSeasonalThemeChoice(false));
+    });
+
+    it("turning it back on keeps the preference underneath", () => {
+      useThemeStore.getState().setPreference("light");
+      useThemeStore.getState().chooseSeasonalTheme(true);
+      expect(useThemeStore.getState()).toMatchObject({
+        preference: "light",
+        seasonalThemeActive: true,
+      });
+      expect(stored.get(SEASONAL_THEME_STORAGE_KEY)).toBe(serializeSeasonalThemeChoice(true));
+    });
+
+    it("refresh reads the window and the device's choice", () => {
+      useThemeStore.getState().refreshSeasonalTheme(Date.parse("2026-10-20T12:00:00Z"));
+      expect(useThemeStore.getState()).toMatchObject({
+        seasonalThemeAvailable: true,
+        seasonalThemeActive: true,
+      });
+      stored.set(SEASONAL_THEME_STORAGE_KEY, serializeSeasonalThemeChoice(false));
+      useThemeStore.getState().refreshSeasonalTheme(Date.parse("2026-10-20T12:00:00Z"));
+      expect(useThemeStore.getState().seasonalThemeActive).toBe(false);
+      useThemeStore.getState().refreshSeasonalTheme(Date.parse("2026-11-02T12:00:00Z"));
+      expect(useThemeStore.getState()).toMatchObject({
+        seasonalThemeAvailable: false,
+        seasonalThemeActive: false,
+      });
+    });
+
+    it("theme choices outside the season record nothing", () => {
+      useThemeStore.getState().setPreference("light");
+      expect(stored.has(SEASONAL_THEME_STORAGE_KEY)).toBe(false);
     });
   });
 });

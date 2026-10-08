@@ -26,6 +26,19 @@ Un tema personalizado es una base (oscura o clara) más cambios puntuales, nunca
 - Cada usuario puede tener hasta `CUSTOM_THEMES_PER_USER_MAX` temas. Las escrituras usan concurrencia optimista (`version`, 409 si hay conflicto), y cada cambio les avisa a las otras pestañas y dispositivos del usuario por la sala `user:<id>` de tiempo real.
 - El editor (`components/Theme/ThemeEditorPanel.tsx`) es un diálogo no modal y sin velo, así la página de atrás muestra el tema en vivo; lleva el `data-theme` de su base, así sus propios controles se leen bien sin importar qué se esté editando. Los avisos de contraste advierten pero no bloquean.
 
+## Tema de temporada (Halloween)
+
+Un tema de temporada se pinta encima de la preferencia de cada usuario sin reemplazarla: no toca `voxer.theme.v1` ni la cuenta, así que cuando termina vuelve sola el tema que cada uno tenía.
+
+- La ventana y el nombre están en `lib/theme/seasonalTheme.ts`. Halloween va del 1 de octubre al 1 de noviembre inclusive (hora de Argentina) y se activa para todos, con o sin sesión. Una pestaña abierta cambia sola cuando arranca o termina la ventana.
+- Elegir otro tema (claro, oscuro, sistema o uno propio) lo apaga, y el switch fijo de la sidebar lo vuelve a prender. Esa elección se guarda solo en el dispositivo (`voxer.theme.seasonal.v1`, con el id de la temporada para que no arrastre a la próxima).
+- Los colores salen de `lib/theme/halloweenTheme.ts`, con las mismas claves que un tema personalizado, y `npm run theme:css` los vuelca al bloque generado bajo `:root[data-seasonal-theme="halloween"]`. Su test verifica los mismos pares de contraste que los temas incluidos.
+- Lo que un tema personalizado no puede hacer va escrito a mano en `app/globals.css`: el header con luna, murciélagos y goteo, la tipografía Creepster del logo (no se precarga, se descarga solo si se usa), la niebla del fondo con telarañas, una araña, murciélagos y un cementerio en el borde inferior, y los avatares de anón con forma de fantasma. Las siluetas son máscaras SVG coloreadas con tokens. El banner de la sidebar es `components/Theme/HalloweenBrandBanner.tsx`.
+- El script en línea la aplica antes del primer pintado. `?tema=seguro` y el editor de temas la dejan de lado mientras están activos.
+- En los e2e, `seedDemo` la deja apagada salvo que el spec pida `seasonal: true`. Así los tests no dependen de la fecha.
+
+Para la próxima temporada alcanza con cambiar el id, la ventana y la paleta. Pasada la fecha, el código queda inactivo hasta que se lo borre.
+
 ## Imágenes de fondo
 
 La imagen de fondo del vox solo la ve el dueño del tema. Las subidas se reconocen por sus bytes (solo JPEG, PNG o WebP), se acotan en dimensiones contra las bombas de descompresión, se recodifican a WebP en dos tamaños sin metadatos, y se verifican contra los hashes bloqueados y un cupo por usuario (`server/theme/processBackgroundImage.ts`, `server/theme/themeAssets.ts`). El cliente manda solo el id del recurso; el servidor resuelve la URL, y el CSS solo acepta URLs que pasan `lib/theme/themeAssetUrls.ts`.

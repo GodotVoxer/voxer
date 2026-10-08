@@ -6,12 +6,15 @@ import { useThemeSafeMode } from "@/hooks/theme/useThemeSafeMode";
 import { voxBackgroundStyle } from "@/features/theme/voxBackgroundStyle";
 
 /**
- * Vox detail background: the editor draft, else the active custom theme's; only its owner sees it.
+ * Vox detail background: the editor draft, else the active custom theme's unless the seasonal theme
+ * covers it; only its owner sees it.
  * Images apply once loaded; until then, or on failure, the theme's background color stays.
  */
 export const useVoxDetailBackgroundStyle = (): CSSProperties | undefined => {
   const draftBackground = useThemeStore((s) => s.draft?.voxBackground ?? null);
-  const activeTheme = useThemeStore((s) => (s.preference === "custom" ? s.customTheme : null));
+  const activeTheme = useThemeStore((s) =>
+    s.preference === "custom" && !s.seasonalThemeActive ? s.customTheme : null,
+  );
   const themeAssets = useThemeStore((s) => s.themeAssets);
   const safeMode = useThemeSafeMode();
   const isMobile = useIsMobile();
