@@ -27,7 +27,7 @@ import {
 } from "@/features/comments/submitShortcut";
 import { isStaffRole } from "@/lib/moderation/roles";
 import { cn } from "@/lib/utils";
-import { isTwoColumnLayout } from "@/features/device/twoColumnLayout";
+import { isTwoColumnLayout } from "@/features/device/mediaQueries";
 
 export type CommentComposerHandle = {
   insertReply: ReplyTagHandler;

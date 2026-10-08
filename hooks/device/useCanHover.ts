@@ -1,16 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { FINE_POINTER_MEDIA_QUERY } from "@/features/device/mediaQueries";
+import { useMediaQuery } from "@/hooks/device/useMediaQuery";
 
-const HOVER_QUERY = "(hover: hover) and (pointer: fine)";
-
-const subscribeHover = (onStoreChange: () => void) => {
-  const mql = window.matchMedia(HOVER_QUERY);
-  mql.addEventListener("change", onStoreChange);
-  return () => mql.removeEventListener("change", onStoreChange);
-};
-
-const getHoverSnapshot = () => window.matchMedia(HOVER_QUERY).matches;
-
-export const useCanHover = () =>
-  useSyncExternalStore(subscribeHover, getHoverSnapshot, () => false);
+export const useCanHover = () => useMediaQuery(FINE_POINTER_MEDIA_QUERY, false);

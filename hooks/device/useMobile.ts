@@ -1,14 +1,6 @@
-import { useSyncExternalStore } from "react";
+"use client";
 
-const MOBILE_BREAKPOINT = 768;
+import { MOBILE_MEDIA_QUERY } from "@/features/device/mediaQueries";
+import { useMediaQuery } from "@/hooks/device/useMediaQuery";
 
-const subscribeMobile = (onStoreChange: () => void) => {
-  const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-  mql.addEventListener("change", onStoreChange);
-  return () => mql.removeEventListener("change", onStoreChange);
-};
-
-const getMobileSnapshot = () => window.innerWidth < MOBILE_BREAKPOINT;
-
-export const useIsMobile = () =>
-  useSyncExternalStore(subscribeMobile, getMobileSnapshot, () => false);
+export const useIsMobile = () => useMediaQuery(MOBILE_MEDIA_QUERY, false);

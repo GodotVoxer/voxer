@@ -1,13 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { isTwoColumnLayout, TWO_COLUMN_MEDIA_QUERY } from "@/features/device/twoColumnLayout";
+import { TWO_COLUMN_MEDIA_QUERY } from "@/features/device/mediaQueries";
+import { useMediaQuery } from "@/hooks/device/useMediaQuery";
 
-const subscribeTwoColumn = (onStoreChange: () => void) => {
-  const mql = window.matchMedia(TWO_COLUMN_MEDIA_QUERY);
-  mql.addEventListener("change", onStoreChange);
-  return () => mql.removeEventListener("change", onStoreChange);
-};
-
-export const useTwoColumnLayout = () =>
-  useSyncExternalStore(subscribeTwoColumn, isTwoColumnLayout, () => true);
+export const useTwoColumnLayout = () => useMediaQuery(TWO_COLUMN_MEDIA_QUERY, true);

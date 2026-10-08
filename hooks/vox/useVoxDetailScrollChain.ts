@@ -2,7 +2,7 @@
 import { useEffect, type RefObject } from "react";
 import { chainedWheelDelta } from "@/features/vox/detail/scrollChain";
 import { wheelDeltaPixels } from "@/features/device/wheelDeltaPixels";
-import { isTwoColumnLayout } from "@/features/device/twoColumnLayout";
+import { isTwoColumnLayout } from "@/features/device/mediaQueries";
 import { prefersReducedMotion } from "@/features/device/reducedMotion";
 
 /** Share of the pending distance applied per frame: a short ease-out, like a native wheel notch. */
