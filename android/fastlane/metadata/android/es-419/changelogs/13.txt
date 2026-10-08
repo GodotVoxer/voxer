@@ -1,0 +1,1 @@
+- Tocar un vox al scrollear ya no muestra «No pudimos cargar Voxer».
