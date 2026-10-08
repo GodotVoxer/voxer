@@ -1,4 +1,4 @@
-import { extractYoutubeVideoId } from "@/lib/media/youtube";
+import { extractYoutubeVideoId, isYoutubeEmbedUrl } from "@/lib/media/youtube";
 import { isManagedPublicUploadUrl } from "@/server/media/uploadUrls";
 
 export type ResolveCommentMediaInput = {
@@ -62,3 +62,10 @@ export const resolveCommentMediaForCreate = (
   }
   return { ok: true, imageUrl: null, videoUrl: null };
 };
+
+/** A file stored on the site, as opposed to a YouTube embed. */
+export const commentMediaIsUpload = (media: {
+  imageUrl: string | null;
+  videoUrl: string | null;
+}): boolean =>
+  media.imageUrl !== null || (media.videoUrl !== null && !isYoutubeEmbedUrl(media.videoUrl));

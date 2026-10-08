@@ -17,7 +17,7 @@ import {
   COMMENT_CREATE_INTERVAL_MS,
   COMMENT_DISPLAY_NAME_MAX,
 } from "@/lib/limits";
-import { resolveCommentMediaForCreate } from "@/server/comments/createMedia";
+import { commentMediaIsUpload, resolveCommentMediaForCreate } from "@/server/comments/createMedia";
 import { isUsableVideoPosterUrl } from "@/server/media/videoPosterPlaceholder";
 import { createCommentSchema } from "@/lib/comments/schemas";
 import type { z } from "zod";
@@ -34,6 +34,8 @@ import {
   type BanApiPayload,
 } from "@/server/moderation/activeBan";
 import { getPostingBlockForUser } from "@/server/moderation/postingEligibility";
+import { isTextOnlyModeActive } from "@/server/moderation/textOnlyMode";
+import { TEXT_ONLY_MODE_UPLOAD_MESSAGE_ES } from "@/lib/media/textOnlyMode";
 import { hashClientIpFromRawHeaderValue } from "@/server/http/clientIpHash";
 import { assertCommentCreateClientIpCooldown } from "@/server/posting/clientIpCreateCooldown";
 import {
@@ -61,7 +63,8 @@ export type CreateCommentResult =
         | "banned"
         | "client_network_blocked"
         | "bad_media"
-        | "bad_poll";
+        | "bad_poll"
+        | "text_only_mode";
       message?: string;
       ban?: BanApiPayload;
     };
@@ -135,6 +138,10 @@ export const createCommentOnVox = async (
         kind: "client_network_blocked",
         ban: clientIpBanToApiPayload(postingBlock.ban),
       };
+    }
+    // Also rejects files uploaded before the mode was turned on and published after.
+    if (commentMediaIsUpload(mediaResolved) && (await isTextOnlyModeActive())) {
+      return { ok: false, kind: "text_only_mode", message: TEXT_ONLY_MODE_UPLOAD_MESSAGE_ES };
     }
     if (!vox) return { ok: false, kind: "not_found" };
     const disclosureRaw = parsed.pollDisclosureOptionId?.trim() ?? "";

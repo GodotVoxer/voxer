@@ -16,7 +16,7 @@ Los objetos de `uploads/` nunca se reescriben en el lugar. Servir dos versiones 
 
 **Subida multipart.** `POST /api/upload` recibe el archivo como `FormData`, lo procesa igual y guarda el resultado en el bucket, o en `public/uploads/` en el disco local si no hay bucket configurado. Es el único camino sin almacenamiento de objetos, y el que usa el cliente como respaldo cuando la subida directa no está disponible.
 
-Los cuatro puntos de entrada comparten `server/upload/guard.ts` (chequeos de base de datos, sesión, almacenamiento, límite de uso y ban).
+Los cuatro puntos de entrada comparten `server/upload/guard.ts` (chequeos de base de datos, sesión, almacenamiento, límite de uso, ban y [modo «solo texto»](moderation.md#modo-solo-texto)).
 
 ## Procesamiento
 

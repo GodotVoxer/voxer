@@ -95,6 +95,9 @@ export const POST = async (req: Request, { params }: Params) => {
     if (result.kind === "bad_media") {
       return jsonError(result.message ?? "Multimedia inválida", 400);
     }
+    if (result.kind === "text_only_mode") {
+      return jsonError(result.message ?? "Multimedia inválida", 403);
+    }
     if (result.kind === "rate") {
       return jsonError(result.message ?? "Esperá unos segundos.", 429);
     }

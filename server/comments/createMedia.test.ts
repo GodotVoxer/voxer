@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolveCommentMediaForCreate } from "./createMedia";
+import { commentMediaIsUpload, resolveCommentMediaForCreate } from "./createMedia";
 
 describe("resolveCommentMediaForCreate", () => {
   afterEach(() => {
@@ -67,5 +67,23 @@ describe("resolveCommentMediaForCreate", () => {
       imageUrl: null,
       videoUrl: null,
     });
+  });
+});
+
+describe("commentMediaIsUpload", () => {
+  it("counts stored images and videos but not YouTube embeds or text", () => {
+    expect(
+      commentMediaIsUpload({ imageUrl: "https://cdn.example/uploads/a.webp", videoUrl: null }),
+    ).toBe(true);
+    expect(
+      commentMediaIsUpload({ imageUrl: null, videoUrl: "https://cdn.example/uploads/a.mp4" }),
+    ).toBe(true);
+    expect(
+      commentMediaIsUpload({
+        imageUrl: null,
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      }),
+    ).toBe(false);
+    expect(commentMediaIsUpload({ imageUrl: null, videoUrl: null })).toBe(false);
   });
 });

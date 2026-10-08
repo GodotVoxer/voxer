@@ -43,6 +43,14 @@ Un admin puede editar el título y la descripción de sus propios vox (`PATCH /a
 
 `server/moderation/postingEligibility.ts` es la única forma del 403 que se devuelve al publicar (vox, comentario y cada ruta de subida). Incluye el motivo del ban, su fin y su alcance, también en los bans por red, y `BanBlockedDialog` los muestra. Escribí los motivos sabiendo que los va a leer la persona baneada y, con un ban por red, cualquiera que comparta esa conexión.
 
+Un ban por red activo también impide crear cuentas desde esa conexión (`server/auth/register.ts`).
+
+## Modo «solo texto»
+
+Es un modo de emergencia para cuando hay un ataque y no da el tiempo para moderar. Un admin lo activa y lo desactiva desde el panel de moderación (`PUT /api/moderation/text-only-mode`); el resto del staff solo ve si está activo. El estado vive en la única fila de `SiteSettings` (`textOnlySince`) y se lee en cada chequeo, así las dos instancias de la app lo ven al instante.
+
+Mientras está activo, ninguna ruta de subida acepta archivos (`server/upload/guard.ts` y la de fondos de tema), y crear un vox o un comentario con un archivo del sitio responde 403, también si el archivo se subió antes de activarlo. Siguen andando el texto y los links de YouTube. El mensaje está en `lib/media/textOnlyMode.ts`. Rige también para el staff: no hay excepción para admins.
+
 ## Denuncias
 
 Los usuarios denuncian vox y comentarios. Las denuncias se deduplican por denunciante, publicación y motivo, le avisan al staff por su propia campana y su propio canal de push, y llevan directo al contenido denunciado. Como en las notificaciones, el panel muestra primero las no vistas y, dentro de cada grupo, las más nuevas arriba.

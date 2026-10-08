@@ -8,7 +8,9 @@ import {
   getPostingBlockForUser,
   postingBlockResponse,
 } from "@/server/moderation/postingEligibility";
+import { isTextOnlyModeActive } from "@/server/moderation/textOnlyMode";
 import { isR2StorageFullyConfigured } from "@/server/storage/r2Env";
+import { TEXT_ONLY_MODE_UPLOAD_MESSAGE_ES } from "@/lib/media/textOnlyMode";
 
 type UploadGuardOptions = {
   rateLimit: RateLimitName;
@@ -16,7 +18,7 @@ type UploadGuardOptions = {
   requiresBucket: boolean;
 };
 
-/** Checks shared by every upload route, in order: service, session, rate limit, posting ban. */
+/** Checks shared by every upload route, in order: service, session, rate limit, posting ban, text-only mode. */
 export const guardUploadRequest = async (
   req: Request,
   { rateLimit, requiresBucket }: UploadGuardOptions,
@@ -34,5 +36,8 @@ export const guardUploadRequest = async (
   }
   const postingBlock = await getPostingBlockForUser(userId, ip);
   if (postingBlock) return { error: postingBlockResponse(postingBlock) };
+  if (await isTextOnlyModeActive()) {
+    return { error: jsonError(TEXT_ONLY_MODE_UPLOAD_MESSAGE_ES, 403) };
+  }
   return { userId, ip };
 };

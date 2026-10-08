@@ -3,6 +3,7 @@ import { hashClientIpFromRawHeaderValue } from "@/server/http/clientIpHash";
 import { acceptedRulesData } from "@/server/auth/communityRules";
 import { hashPassword } from "@/server/auth/password";
 import { normalizeUsername } from "@/server/auth/username";
+import { getActiveClientIpBanForHash } from "@/server/moderation/activeClientIpBan";
 const MAX_ACCOUNTS_PER_IP = 5;
 export type RegisterInput = {
   username: string;
@@ -30,6 +31,9 @@ export const registerUser = async (input: RegisterInput): Promise<RegisterResult
   } catch (e) {
     console.error("[auth:register]", e instanceof Error ? e.message : e);
     return { ok: false, message: "Servicio no disponible. Probá más tarde.", status: 503 };
+  }
+  if (await getActiveClientIpBanForHash(registrationIpHash)) {
+    return { ok: false, message: "No se pueden crear cuentas desde esta conexión.", status: 403 };
   }
   const count = await prisma.user.count({
     where: {

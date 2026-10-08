@@ -2,6 +2,8 @@ import { mockModerationActions, mockModerationPreview } from "@/mocks/data/moder
 import { http, HttpResponse } from "msw";
 import { voxList } from "@/mocks/data/voxList";
 
+let textOnlySince: string | null = null;
+
 export const moderationHandlers = [
   http.get("/api/moderation/notifications", () => {
     return HttpResponse.json({
@@ -114,6 +116,14 @@ export const moderationHandlers = [
       fileCount: 6,
       blockedHashes: 0,
     });
+  }),
+  http.get("/api/moderation/text-only-mode", () => {
+    return HttpResponse.json({ since: textOnlySince });
+  }),
+  http.put("/api/moderation/text-only-mode", async ({ request }) => {
+    const body = (await request.json()) as { active?: boolean };
+    textOnlySince = body.active ? new Date().toISOString() : null;
+    return HttpResponse.json({ since: textOnlySince });
   }),
   http.patch(/\/api\/moderation\/users\/[^/]+\/role$/, () => {
     return HttpResponse.json({ ok: true });

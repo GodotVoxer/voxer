@@ -2,6 +2,8 @@ import type { MediaType } from "@prisma/client";
 import { after } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { getPostingBlockForUser } from "@/server/moderation/postingEligibility";
+import { isTextOnlyModeActive } from "@/server/moderation/textOnlyMode";
+import { TEXT_ONLY_MODE_UPLOAD_MESSAGE_ES } from "@/lib/media/textOnlyMode";
 import {
   banToApiPayload,
   clientIpBanToApiPayload,
@@ -136,6 +138,10 @@ export const createVoxFromParsed = async (
         code: "CLIENT_NETWORK_BLOCKED",
         ban: clientIpBanToApiPayload(postingBlock.ban),
       };
+    }
+    // Also rejects files uploaded before the mode was turned on and published after.
+    if (mediaType !== "YOUTUBE" && (await isTextOnlyModeActive())) {
+      return { ok: false, message: TEXT_ONLY_MODE_UPLOAD_MESSAGE_ES, status: 403 };
     }
     const clientIpHash = hashClientIpFromRawHeaderValue(ctx.clientIpRaw);
     const now = new Date();

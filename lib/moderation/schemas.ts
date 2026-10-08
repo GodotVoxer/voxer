@@ -106,6 +106,8 @@ export const moderationStaffAddByUsernameSchema = z.object({
   username: z.string().trim().min(1).max(USERNAME_MAX),
 });
 
+export const moderationTextOnlyModeSchema = z.object({ active: z.boolean() });
+
 export const moderationAuthorPublicationsQuerySchema = z
   .object({
     voxId: z.string().optional(),

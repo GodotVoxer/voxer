@@ -476,6 +476,13 @@ model BlobPendingPutFinalize {
   @@index([expiresAt])
 }
 
+/** Configuración global del sitio: una sola fila, `id = "site"`. */
+model SiteSettings {
+  id            String    @id @default("site")
+  /** Modo de emergencia «solo texto»: con fecha, nadie sube archivos ni publica los ya subidos. */
+  textOnlySince DateTime?
+}
+
 /** Dedupe de multimedia por SHA-256 del archivo guardado (bytes finales en Blob o en disco). */
 model StoredMediaByHash {
   id             String          @id @default(cuid())

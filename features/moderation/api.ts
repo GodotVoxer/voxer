@@ -107,6 +107,19 @@ export const postStaffAddByUsername = async (username: string): Promise<void> =>
   await api.post("/moderation/staff", { username });
 };
 
+/** `since` is `null` while the mode is off. */
+export type TextOnlyModeState = { since: string | null };
+
+export const fetchTextOnlyMode = async (): Promise<TextOnlyModeState> => {
+  const res = await api.get<TextOnlyModeState>("/moderation/text-only-mode");
+  return res.data;
+};
+
+export const putTextOnlyMode = async (active: boolean): Promise<TextOnlyModeState> => {
+  const res = await api.put<TextOnlyModeState>("/moderation/text-only-mode", { active });
+  return res.data;
+};
+
 export const postModerationBan = async (body: {
   targetUserId: string;
   reason: string;

@@ -15,6 +15,8 @@ import {
 import { getSessionUserIdFromCookies } from "@/server/auth/sessionCookie";
 import { requestClientIp } from "@/server/http/requestIp";
 import { getPostingBlockForUser } from "@/server/moderation/postingEligibility";
+import { isTextOnlyModeActive } from "@/server/moderation/textOnlyMode";
+import { TEXT_ONLY_MODE_UPLOAD_MESSAGE_ES } from "@/lib/media/textOnlyMode";
 import {
   processBackgroundImage,
   ThemeBackgroundImageError,
@@ -63,6 +65,9 @@ export const POST = async (req: Request) => {
   }
   if (await getPostingBlockForUser(userId, requestClientIp(req))) {
     return jsonError("Tu cuenta no puede subir imágenes en este momento.", 403);
+  }
+  if (await isTextOnlyModeActive()) {
+    return jsonError(TEXT_ONLY_MODE_UPLOAD_MESSAGE_ES, 403);
   }
   let form: FormData;
   try {

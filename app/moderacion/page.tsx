@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/store";
-import { isStaffRole } from "@/lib/moderation/roles";
+import { isAdminRole, isStaffRole } from "@/lib/moderation/roles";
 import { ModerationAccessDenied } from "@/components/Moderation/Dialogs/ModerationAccessDenied";
 import { ModerationHistoryPanel } from "@/components/Moderation/Staff/ModerationHistoryPanel";
 import { ModerationStaffPanel } from "@/components/Moderation/Staff/ModerationStaffPanel";
+import { TextOnlyModeCard } from "@/components/Moderation/Staff/TextOnlyModeCard";
 
 export default function ModerationPage() {
   const user = useAuthStore((s) => s.user);
@@ -41,6 +42,8 @@ export default function ModerationPage() {
           </Button>
         </div>
       </div>
+
+      <TextOnlyModeCard isAdmin={isAdminRole(user.role)} />
 
       {tab === "log" ? (
         <ModerationHistoryPanel onAuthRefresh={refresh} />

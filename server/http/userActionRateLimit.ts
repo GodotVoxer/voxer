@@ -10,6 +10,7 @@ const USER_ACTION_LIMITS = {
   socketToken: 30,
   markRead: 120,
   acceptRules: 10,
+  textOnlyMode: 10,
 } as const;
 
 export type UserAction = keyof typeof USER_ACTION_LIMITS;
