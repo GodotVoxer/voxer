@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/Sidebar/Sidebar";
-import { MobileAccountMenu } from "./MobileAccountMenu";
 import { HeaderCategoriesMenu } from "./HeaderCategoriesMenu";
 import { AuthBootstrap } from "@/components/Auth/AuthBootstrap";
 import { UserRealtimeBridge } from "@/components/Auth/UserRealtimeBridge";
@@ -58,7 +57,6 @@ export const Header = () => {
   const authDialogOpen = useAuthStore((s) => s.authDialogOpen);
   const rulesPromptOpen = useRulesPromptStore((s) => s.reason !== null);
   const idle = useIdleReady();
-  const logout = useAuthStore((s) => s.logout);
   useFullscreenScrollRestore();
   return (
     <>
@@ -109,25 +107,17 @@ export const Header = () => {
               Entrar
             </Button>
           )}
-          {/* On desktop the header is the only place to jump to a category without opening the sidebar. */}
           <HeaderCategoriesMenu />
-          {user && (
-            <div className="app-header-session contents">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="hidden cursor-pointer text-fg-muted hover:bg-fg/10 hover:text-fg sm:inline-flex"
-                onClick={() => void logout()}
-              >
-                Salir
-              </Button>
-            </div>
-          )}
-          {user ? <MobileAccountMenu /> : null}
           {user && isStaffRole(user.role) ? <ModerationReportsBell /> : null}
           <NotificationsBell />
-          <CreateVoxDialog />
+          {/* Visitors are sent to sign in instead of filling a form they cannot publish. */}
+          {loading ? (
+            <CreateVoxTriggerButton disabled />
+          ) : user ? (
+            <CreateVoxDialog />
+          ) : (
+            <CreateVoxTriggerButton onClick={() => openAuthDialog()} />
+          )}
         </div>
       </header>
     </>

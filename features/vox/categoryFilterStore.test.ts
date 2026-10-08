@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { isCategoryVisibleOnHome, useCategoryFilterStore } from "./categoryFilterStore";
+import {
+  categoryGroupVisibility,
+  isCategoryVisibleOnHome,
+  useCategoryFilterStore,
+} from "./categoryFilterStore";
 import { CATEGORY_GROUPS } from "@/lib/vox/categoryCodes";
 import { NSFW_CATEGORIES } from "@/lib/vox/sensitiveCategories";
 
@@ -51,5 +55,26 @@ describe("categoryFilterStore: +18 prompt", () => {
     for (const category of otras.filter((c) => c !== "Humor")) {
       expect(isCategoryVisibleOnHome(enabledByCategory, category)).toBe(true);
     }
+  });
+});
+
+describe("categoryGroupVisibility", () => {
+  const group = CATEGORY_GROUPS[0];
+  const allOn = {
+    ...initial.enabledByCategory,
+    ...Object.fromEntries(group.categories.map((c) => [c, true])),
+  };
+
+  it("is all when every category of the group is shown", () => {
+    expect(categoryGroupVisibility(allOn, group)).toBe("all");
+  });
+
+  it("is some when only part of the group is shown", () => {
+    expect(categoryGroupVisibility({ ...allOn, [group.categories[0]]: false }, group)).toBe("some");
+  });
+
+  it("is none when the whole group is hidden", () => {
+    const allOff = { ...allOn, ...Object.fromEntries(group.categories.map((c) => [c, false])) };
+    expect(categoryGroupVisibility(allOff, group)).toBe("none");
   });
 });

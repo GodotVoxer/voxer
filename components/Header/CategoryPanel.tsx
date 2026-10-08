@@ -1,92 +1,38 @@
 "use client";
-import { useEffect, useRef, useState, type RefObject } from "react";
-import { ChevronRight, LayoutGrid } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { CATEGORY_GROUPS } from "@/lib/vox/categoryCodes";
 import type { VoxCategory } from "@/lib/vox/categories";
 import { CategoryLink } from "@/components/Vox/CategoryLink";
 import { DrawerClose } from "@/components/ui/drawer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useCategoryFilterStore } from "@/features/vox/categoryFilterStore";
+import {
+  categoryGroupVisibility,
+  useCategoryFilterStore,
+  type CategoryGroupVisibility,
+} from "@/features/vox/categoryFilterStore";
 import { cn } from "@/lib/utils";
-type CategoryPanelProps = {
-  scrollContainerRef: RefObject<HTMLDivElement | null>;
-};
-
-const scrollCategoriesTriggerIntoView = (container: HTMLDivElement, trigger: HTMLElement) => {
-  const containerRect = container.getBoundingClientRect();
-  const triggerRect = trigger.getBoundingClientRect();
-  const triggerTop = triggerRect.top - containerRect.top + container.scrollTop;
-  const targetTop = triggerTop - container.clientHeight / 2 + triggerRect.height / 2;
-  container.scrollTo({
-    top: Math.max(0, targetTop),
-    behavior: "smooth",
-  });
-};
-
-export const CategoryPanel = ({ scrollContainerRef }: CategoryPanelProps) => {
-  const categoriesTriggerRef = useRef<HTMLButtonElement>(null);
-  const [openPanel, setOpenPanel] = useState(false);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(CATEGORY_GROUPS.map((g) => [g.id, false])),
-  );
+/** Category list of the mobile drawer: each group folds, and the checkboxes pick what the home shows. */
+export const CategoryPanel = () => {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const enabledByCategory = useCategoryFilterStore((s) => s.enabledByCategory);
   const setCategoryEnabled = useCategoryFilterStore((s) => s.setCategoryEnabled);
   const setGroupEnabled = useCategoryFilterStore((s) => s.setGroupEnabled);
 
-  useEffect(() => {
-    if (!openPanel) return;
-    const container = scrollContainerRef.current;
-    const trigger = categoriesTriggerRef.current;
-    if (!container || !trigger) return;
-
-    const run = () => scrollCategoriesTriggerIntoView(container, trigger);
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(run);
-    });
-    const afterExpand = window.setTimeout(run, 220);
-
-    return () => {
-      cancelAnimationFrame(raf1);
-      if (raf2) cancelAnimationFrame(raf2);
-      window.clearTimeout(afterExpand);
-    };
-  }, [openPanel, scrollContainerRef]);
-
   return (
-    <div className="mt-4 border-t border-fg/25 pt-4">
-      <Collapsible open={openPanel} onOpenChange={setOpenPanel}>
-        <CollapsibleTrigger
-          ref={categoriesTriggerRef}
-          type="button"
-          className="flex w-full items-center justify-between gap-2 rounded-md px-1 py-2 text-left text-base font-semibold text-fg hover:bg-fg/10 data-[state=open]:[&>span>svg]:rotate-90"
-        >
-          <span className="flex items-center gap-2.5">
-            <ChevronRight className="size-5 shrink-0 text-fg transition-transform duration-200" />
-            <LayoutGrid className="size-5 shrink-0 text-fg" strokeWidth={2} aria-hidden />
-            Categorías
-          </span>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="mt-2 space-y-1.5 pr-0.5">
-            {CATEGORY_GROUPS.map((group) => {
-              const groupAllOn = group.categories.every((c) => enabledByCategory[c] !== false);
-              return (
-                <GroupBlock
-                  key={group.id}
-                  group={group}
-                  expanded={expanded[group.id] ?? false}
-                  onExpandedChange={(open) => setExpanded((e) => ({ ...e, [group.id]: open }))}
-                  enabledByCategory={enabledByCategory}
-                  setCategoryEnabled={setCategoryEnabled}
-                  setGroupEnabled={setGroupEnabled}
-                  groupAllEnabled={groupAllOn}
-                />
-              );
-            })}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+    <div className="space-y-1.5">
+      {CATEGORY_GROUPS.map((group) => (
+        <GroupBlock
+          key={group.id}
+          group={group}
+          expanded={expanded[group.id] ?? false}
+          onExpandedChange={(open) => setExpanded((e) => ({ ...e, [group.id]: open }))}
+          enabledByCategory={enabledByCategory}
+          setCategoryEnabled={setCategoryEnabled}
+          setGroupEnabled={setGroupEnabled}
+          visibility={categoryGroupVisibility(enabledByCategory, group)}
+        />
+      ))}
     </div>
   );
 };
@@ -97,7 +43,7 @@ const GroupBlock = ({
   enabledByCategory,
   setCategoryEnabled,
   setGroupEnabled,
-  groupAllEnabled,
+  visibility,
 }: {
   group: (typeof CATEGORY_GROUPS)[number];
   expanded: boolean;
@@ -105,15 +51,12 @@ const GroupBlock = ({
   enabledByCategory: Record<VoxCategory, boolean>;
   setCategoryEnabled: (c: VoxCategory, v: boolean) => void;
   setGroupEnabled: (g: (typeof CATEGORY_GROUPS)[number], v: boolean) => void;
-  groupAllEnabled: boolean;
+  visibility: CategoryGroupVisibility;
 }) => {
   const groupCbRef = useRef<HTMLInputElement>(null);
-  const someOn = group.categories.some((c) => enabledByCategory[c] !== false);
   useEffect(() => {
-    const el = groupCbRef.current;
-    if (!el) return;
-    el.indeterminate = !groupAllEnabled && someOn;
-  }, [groupAllEnabled, someOn]);
+    if (groupCbRef.current) groupCbRef.current.indeterminate = visibility === "some";
+  }, [visibility]);
   return (
     <Collapsible
       open={expanded}
@@ -136,8 +79,8 @@ const GroupBlock = ({
           ref={groupCbRef}
           type="checkbox"
           className="size-5 shrink-0 cursor-pointer accent-brand-600"
-          checked={groupAllEnabled}
-          onChange={() => setGroupEnabled(group, !groupAllEnabled)}
+          checked={visibility === "all"}
+          onChange={() => setGroupEnabled(group, visibility !== "all")}
           onClick={(e) => e.stopPropagation()}
           aria-label={`Mostrar u ocultar todas las categorías de ${group.label} en el inicio`}
         />

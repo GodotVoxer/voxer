@@ -52,7 +52,7 @@ export const NsfwHomePromptContent = () => {
         </div>
 
         <p className="text-xs text-fg-muted">
-          Podés cambiarlo cuando quieras desde el menú, en Categorías → NSFW.
+          Podés cambiarlo cuando quieras desde Categorías, arriba a la derecha, en NSFW.
         </p>
       </DialogContent>
     </Dialog>

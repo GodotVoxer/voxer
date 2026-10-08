@@ -60,3 +60,14 @@ export const isCategoryVisibleOnHome = (
   if (!(category in enabledByCategory)) return true;
   return enabledByCategory[category as VoxCategory] !== false;
 };
+
+export type CategoryGroupVisibility = "all" | "some" | "none";
+
+export const categoryGroupVisibility = (
+  enabledByCategory: Record<VoxCategory, boolean>,
+  group: CategoryGroup,
+): CategoryGroupVisibility => {
+  const shown = group.categories.filter((c) => enabledByCategory[c] !== false).length;
+  if (shown === group.categories.length) return "all";
+  return shown === 0 ? "none" : "some";
+};

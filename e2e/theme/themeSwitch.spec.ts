@@ -109,16 +109,15 @@ test.describe("theme stored on the account", () => {
     await expect(html(page)).toHaveAttribute("data-theme", "light");
   });
 
-  test("on logout the device's signed-out theme returns", async ({ page, context }, info) => {
-    test.skip(info.project.name === "mobile", "«Salir» vive en el menú de cuenta en móvil");
+  test("on logout the device's signed-out theme returns", async ({ page, context }) => {
     await prepare(context);
     await seedAccountTheme(context, "light");
     await context.addInitScript(() => {
       window.localStorage.setItem("voxer.theme.device.v1", JSON.stringify({ mode: "dark" }));
     });
-    await page.goto("/");
+    await openSidebar(page);
     await expect(html(page)).toHaveAttribute("data-theme", "light");
-    await page.getByRole("button", { name: "Salir" }).click();
+    await page.getByRole("button", { name: "Cerrar sesión" }).click();
     await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
     await expect(html(page)).toHaveAttribute("data-theme", "dark");
   });

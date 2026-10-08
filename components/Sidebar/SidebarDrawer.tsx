@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRef, type RefObject } from "react";
+import type { RefObject } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -9,11 +9,20 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { EyeOff, Home, MessageSquare, Settings, Shield, Star, UserRound } from "lucide-react";
-import { CategoryPanel } from "@/components/Header/CategoryPanel";
+import {
+  EyeOff,
+  Home,
+  LogOut,
+  MessageSquare,
+  Settings,
+  Shield,
+  Star,
+  UserRound,
+} from "lucide-react";
 import { SidebarBrandHeader } from "@/components/Sidebar/SidebarBrandHeader";
 import { SidebarNavItem } from "@/components/Sidebar/SidebarNavItem";
 import { SidebarPresenceStatus } from "@/components/Sidebar/SidebarPresenceStatus";
+import { SidebarSessionStatus } from "@/components/Sidebar/SidebarSessionStatus";
 import { SeasonalThemeSidebarItem } from "@/components/Theme/SeasonalThemeSidebarItem";
 import { useAuthStore } from "@/features/auth/store";
 import { useSettingsStore } from "@/features/settings/store";
@@ -33,7 +42,7 @@ type Props = {
 
 export const SidebarDrawer = ({ open, onOpenChange, triggerRef }: Props) => {
   const user = useAuthStore((s) => s.user);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const logout = useAuthStore((s) => s.logout);
 
   return (
     <Drawer direction="left" open={open} onOpenChange={onOpenChange}>
@@ -48,17 +57,15 @@ export const SidebarDrawer = ({ open, onOpenChange, triggerRef }: Props) => {
         <DrawerHeader className="sr-only">
           <DrawerTitle>Voxer</DrawerTitle>
           <DrawerDescription>
-            Navegación principal, accesos rápidos y filtro por categorías.
+            Navegación principal, accesos rápidos, tema y cuenta.
           </DrawerDescription>
         </DrawerHeader>
-        <div
-          ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain scroll-smooth pb-[max(1rem,env(safe-area-inset-bottom))]"
-        >
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain scroll-smooth pb-[max(1rem,env(safe-area-inset-bottom))]">
           <SidebarBrandHeader />
           <div className="px-4">
             <SidebarPresenceStatus />
             <SeasonalThemeSidebarItem />
+            <SidebarSessionStatus />
             <ul className="divide-y divide-fg/10">
               <li>
                 <SidebarNavItem icon={Home} label="Inicio" href="/" />
@@ -113,9 +120,17 @@ export const SidebarDrawer = ({ open, onOpenChange, triggerRef }: Props) => {
                   onSelect={() => useSettingsStore.getState().setDialogOpen(true)}
                 />
               </li>
+              {user ? (
+                <li>
+                  <SidebarNavItem
+                    icon={LogOut}
+                    label="Cerrar sesión"
+                    onSelect={() => void logout()}
+                  />
+                </li>
+              ) : null}
             </ul>
             {open ? <SidebarThemeSection /> : null}
-            <CategoryPanel scrollContainerRef={scrollRef} />
           </div>
         </div>
       </DrawerContent>
