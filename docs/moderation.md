@@ -27,6 +27,7 @@ El estado del diálogo vive en un panel que solo se monta mientras el diálogo e
 ## Borrado reversible y retención
 
 - Borrar pone `deletedAt` y `deletedByUserId` y registra una `ModerationAction`; las lecturas públicas filtran `deletedAt: null`. `undoModerationAction` restaura la fila mientras siga existiendo.
+- Un comentario borrado deja de contar como actividad: borrar comentarios (sueltos o en bloque) recalcula el `lastActivityAt` del vox con su último comentario visible, y deshacer lo vuelve a subir (`server/vox/lastActivity.ts`). Así un flood borrado no deja vox viejos arriba en el inicio.
 - Pasado `SOFT_DELETE_GRACE_MS` (7 días), `server/moderation/purgeExpiredSoftDeletes.ts` borra definitivamente los vox vencidos (sus comentarios caen en cascada) y los comentarios huérfanos de vox vivos; su multimedia queda sin referencias y se barre. Después de eso, deshacer no hace nada.
 - La purga corre dentro de `after()` cuando se crea un vox, acotada a `PURGE_PER_CREATE_BATCH_MAX` filas por vez. Es idempotente: las carreras se capturan fila por fila y lo pendiente se retoma la vez siguiente.
 - `VOX_ACTIVE_DB_CAP` acota la tabla. Cuando un vox nuevo la supera, se borra definitivamente la fila con el `lastActivityAt` más viejo, esté borrada o no; las que estaban vivas emiten `vox:deleted` con el motivo `retention`. El tope también se aplica al contenido de los admins.

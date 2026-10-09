@@ -13,6 +13,7 @@ import {
 } from "@/server/realtime/broadcast";
 import { countActiveCommentsForVox } from "@/server/vox/list";
 import { invalidateVoxDetailCache } from "@/server/vox/getVoxDetailCached";
+import { recomputeVoxLastActivity } from "@/server/vox/lastActivity";
 
 export const staffSoftDeleteVox = async (
   actorUserId: string,
@@ -78,6 +79,7 @@ export const staffSoftDeleteComment = async (
       where: { id: commentId },
       data: { deletedAt: new Date(), deletedByUserId: actorUserId },
     });
+    await recomputeVoxLastActivity(tx, [c.voxId]);
     return tx.moderationAction.create({
       data: {
         actorUserId,

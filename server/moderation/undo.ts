@@ -12,6 +12,7 @@ import {
 import { countActiveCommentsForVox, getVoxListItemById } from "@/server/vox/list";
 import { canUndoModerationAction } from "@/lib/moderation/roleGuards";
 import { invalidateVoxDetailCache } from "@/server/vox/getVoxDetailCached";
+import { recomputeVoxLastActivity } from "@/server/vox/lastActivity";
 import { toPublicComment } from "@/server/comments/serialize";
 import { isStaffRole } from "@/lib/moderation/roles";
 
@@ -113,6 +114,7 @@ export const undoModerationAction = async (
           where: { id: commentId, deletedAt: { not: null } },
           data: { deletedAt: null, deletedByUserId: null },
         });
+        if (typeof p.voxId === "string") await recomputeVoxLastActivity(tx, [p.voxId]);
         break;
       }
       case "RECATEGORIZE_VOX": {
@@ -188,6 +190,14 @@ export const undoModerationAction = async (
             where: { id: { in: commentIds } },
             data: { deletedAt: null, deletedByUserId: null },
           });
+          const restored = await tx.comment.findMany({
+            where: { id: { in: commentIds } },
+            select: { voxId: true },
+          });
+          await recomputeVoxLastActivity(
+            tx,
+            restored.map((c) => c.voxId),
+          );
         }
         break;
       }

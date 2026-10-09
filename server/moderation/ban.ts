@@ -17,6 +17,7 @@ import { banContentWindowDurationMs, banContentWindowLabelEs } from "@/lib/moder
 import { canModerateTarget } from "@/lib/moderation/roleGuards";
 import { resolveLatestClientIpHashForUser } from "@/server/moderation/resolveLatestClientIpHash";
 import { invalidateVoxDetailCache } from "@/server/vox/getVoxDetailCached";
+import { recomputeVoxLastActivity } from "@/server/vox/lastActivity";
 import {
   authorCommentWhere,
   authorVoxWhere,
@@ -106,6 +107,10 @@ export const staffBulkBanUserContent = async (
         where: { id: { in: commentIds } },
         data: { deletedAt: now, deletedByUserId: actorUserId },
       });
+      await recomputeVoxLastActivity(
+        tx,
+        commentRows.map((c) => c.voxId),
+      );
     }
     const a = await tx.moderationAction.create({
       data: {

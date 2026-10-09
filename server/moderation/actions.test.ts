@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { staffBanUser } from "./ban";
+import { staffSoftDeleteComment } from "./softDelete";
 import { undoModerationAction } from "./undo";
 
 const mocks = vi.hoisted(() => ({
@@ -8,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
   actionFindUnique: vi.fn(),
   commentFindMany: vi.fn(),
+  commentFindFirst: vi.fn(),
+  recomputeVoxLastActivity: vi.fn(),
   transaction: vi.fn(),
   broadcastVoxActivity: vi.fn(),
   broadcastVoxCreated: vi.fn(),
@@ -27,7 +30,7 @@ vi.mock("@/server/db/prisma", () => ({
   prisma: {
     user: { findUnique: mocks.userFindUnique },
     moderationAction: { findUnique: mocks.actionFindUnique },
-    comment: { findMany: mocks.commentFindMany },
+    comment: { findMany: mocks.commentFindMany, findFirst: mocks.commentFindFirst },
     $transaction: mocks.transaction,
   },
 }));
@@ -51,12 +54,25 @@ vi.mock("@/server/vox/getVoxDetailCached", () => ({
   invalidateVoxDetailCache: vi.fn(),
 }));
 
+vi.mock("@/server/moderation/commentSnapshot", () => ({
+  commentModerationSnapshot: () => ({}),
+  moderationCommentInclude: {},
+}));
+
+vi.mock("@/server/vox/lastActivity", () => ({
+  recomputeVoxLastActivity: mocks.recomputeVoxLastActivity,
+}));
+
 const makeTx = () => ({
   vox: { update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
-  comment: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+  comment: {
+    update: vi.fn(),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    findMany: vi.fn().mockResolvedValue([]),
+  },
   userBan: { updateMany: vi.fn() },
   clientIpBan: { updateMany: vi.fn() },
-  moderationAction: { update: vi.fn() },
+  moderationAction: { update: vi.fn(), create: vi.fn().mockResolvedValue({ id: "act" }) },
 });
 
 const rolesById = (roles: Record<string, "USER" | "MOD" | "ADMIN">) => {
@@ -163,6 +179,26 @@ describe("undoModerationAction", () => {
     await undoModerationAction("a4", "mod");
 
     expect(mocks.broadcastVoxActivity).toHaveBeenCalledWith("v4", 3);
+    expect(mocks.recomputeVoxLastActivity).toHaveBeenCalledWith(tx, ["v4"]);
+  });
+
+  it("restoring a bulk delete recomputes the activity of the vox its comments were in", async () => {
+    rolesById({ mod: "MOD" });
+    mocks.actionFindUnique.mockResolvedValueOnce({
+      id: "a6",
+      actionType: "BULK_SOFT_DELETE_USER_CONTENT",
+      payload: { voxIds: [], commentIds: ["c1", "c2"] },
+      undoneAt: null,
+      actor: { role: "MOD" },
+    });
+    mocks.commentFindMany.mockResolvedValue([]);
+    const tx = makeTx();
+    tx.comment.findMany.mockResolvedValueOnce([{ voxId: "v1" }, { voxId: "v2" }]);
+    mocks.transaction.mockImplementation(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx));
+
+    await undoModerationAction("a6", "mod");
+
+    expect(mocks.recomputeVoxLastActivity).toHaveBeenCalledWith(tx, ["v1", "v2"]);
   });
 
   it("the undo stands even when the realtime broadcast fails", async () => {
@@ -180,6 +216,26 @@ describe("undoModerationAction", () => {
 
     await expect(undoModerationAction("a5", "mod")).resolves.toEqual({ ok: true });
     expect(tx.moderationAction.update).toHaveBeenCalled();
+  });
+});
+
+describe("staffSoftDeleteComment", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("drops the vox back to its last visible activity", async () => {
+    mocks.commentFindFirst.mockResolvedValueOnce({
+      id: "c1",
+      voxId: "v1",
+      publicTag: "AB12",
+      authorId: "u1",
+    });
+    const tx = makeTx();
+    mocks.transaction.mockImplementation(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx));
+
+    await expect(staffSoftDeleteComment("mod", "c1")).resolves.toMatchObject({ ok: true });
+    expect(mocks.recomputeVoxLastActivity).toHaveBeenCalledWith(tx, ["v1"]);
   });
 });
 
