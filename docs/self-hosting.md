@@ -41,7 +41,7 @@ docker compose up -d
 
 Caddy sirve HTTP plano; algo delante tiene que terminar el TLS y poner la cabecera con la IP del cliente que nombra `TRUSTED_PROXY`.
 
-- **Cloudflare Tunnel** (recomendado): poné `COMPOSE_PROFILES=tunnel` y `CLOUDFLARE_TUNNEL_TOKEN`, apuntá el túnel a `http://caddy:80` y no abras ningún puerto web. Dejá `TRUSTED_PROXY=cloudflare`.
+- **Cloudflare Tunnel** (recomendado): poné `COMPOSE_PROFILES=tunnel` y `CLOUDFLARE_TUNNEL_TOKEN`, apuntá el túnel a `http://caddy:80` y no abras ningún puerto web. Dejá `TRUSTED_PROXY=cloudflare`. Las métricas de `cloudflared` (latencia de cada conexión al borde, errores) quedan en `http://127.0.0.1:20241/metrics`, accesibles solo desde el servidor.
 - **Un reverse proxy en el propio servidor**: Caddy escucha en `HTTP_BIND` (por defecto `127.0.0.1:8080`). Usá `TRUSTED_PROXY=xff` solo si ese proxy reescribe `X-Forwarded-For`.
 
 Si un CDN cachea las páginas, purgalo después de cada deploy (`CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_PURGE_TOKEN`, `CLOUDFLARE_PURGE_HOSTS`): el HTML cacheado apuntaría a los archivos del build anterior. Cacheá solo las respuestas marcadas como públicas (`s-maxage`); la API y el detalle de los vox mandan `no-store`.

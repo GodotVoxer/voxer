@@ -124,9 +124,12 @@ services:
     image: cloudflare/cloudflared:latest
     profiles: [tunnel]
     restart: unless-stopped
-    command: tunnel --no-autoupdate run
+    command: tunnel --no-autoupdate --metrics 0.0.0.0:20241 run
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    # Prometheus metrics (per-connection QUIC RTT, request errors), reachable only from the host.
+    ports:
+      - 127.0.0.1:20241:20241
     depends_on: [caddy]
     mem_limit: 100m
     networks: [internal]
