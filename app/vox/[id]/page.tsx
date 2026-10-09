@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { preload } from "react-dom";
 import { VoxDetailView } from "@/components/Vox/Detail/VoxDetailView";
 import { getSessionUserIdFromCookies } from "@/server/auth/sessionCookie";
 import { getVoxDetailCached } from "@/server/vox/getVoxDetailCached";
@@ -11,6 +12,7 @@ import { isSensitiveVoxCategory } from "@/lib/vox/sensitiveCategories";
 import { truncateOgDescription } from "@/lib/format/truncate";
 import { youtubeThumbnailUrl } from "@/lib/media/youtube";
 import { voxPath } from "@/lib/vox/paths";
+import { voxCommentsPreloadHref } from "@/lib/vox/commentsPreload";
 
 type Props = {
   params: Promise<{
@@ -91,6 +93,9 @@ const VoxPage = async ({ params, searchParams }: Props) => {
   if (!voxRow) {
     notFound();
   }
+
+  // Without it the comments wait for hydration: a second round trip to the origin after the HTML.
+  preload(voxCommentsPreloadHref(id), { as: "fetch", crossOrigin: "use-credentials" });
 
   const initialVox = serializeVoxDetailForClient(voxRow);
 

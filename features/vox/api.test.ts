@@ -1,8 +1,26 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { api } from "@/features/http/apiClient";
 import { HOME_FEED_PRELOAD_HREF } from "@/lib/vox/homeFeedPreload";
+import { voxCommentsPreloadHref } from "@/lib/vox/commentsPreload";
 import { VOX_LIST_PAGE_SIZE } from "@/lib/limits";
+import { loadAllCommentsForVox } from "@/features/comments/loadAll";
 import { getVoxListPage, getVoxPollById, toggleModerationVoxPin } from "./api";
+
+describe("loadAllCommentsForVox", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+  it("requests the first page at the URL the vox page preloads", async () => {
+    const spy = vi.spyOn(api, "get").mockResolvedValue({
+      data: { comments: [], nextCursor: null },
+    });
+    await loadAllCommentsForVox("cmuzl1nre000401nzquy0utgz");
+    const [url, config] = spy.mock.calls[0]!;
+    expect(api.getUri({ url, ...config })).toBe(
+      voxCommentsPreloadHref("cmuzl1nre000401nzquy0utgz"),
+    );
+  });
+});
 
 describe("getVoxListPage", () => {
   afterEach(() => {
