@@ -61,11 +61,9 @@ export const ModerationActionPreviewDialog = ({
         <DialogHeader className="min-w-0 pr-6">
           <DialogTitle>{moderationActionPreviewTitle(action)}</DialogTitle>
         </DialogHeader>
-        {action.actionType === "BULK_SOFT_DELETE_USER_CONTENT" ? (
-          <p className="min-w-0 whitespace-pre-wrap text-sm text-fg-secondary">
-            {moderationActionPayloadSummary(action)}
-          </p>
-        ) : null}
+        <p className="min-w-0 whitespace-pre-wrap text-sm text-fg-secondary">
+          {moderationActionPayloadSummary(action)}
+        </p>
         <p className="text-xs text-fg-muted">
           {formatDateTimeEs(action.createdAt)}
           {action.undoneAt ? " · Acción deshecha" : ""}
