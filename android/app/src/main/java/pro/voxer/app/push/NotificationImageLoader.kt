@@ -19,24 +19,21 @@ object NotificationImageLoader {
     private const val TIMEOUT_MS = 4_000
     private const val MAX_BYTES = 3 * 1024 * 1024
     private const val MAX_SOURCE_PIXELS = 40_000_000L
-    private const val BIG_PICTURE_PX = 720
     private const val LARGE_ICON_PX = 256
-
-    data class Images(val bigPicture: Bitmap, val largeIcon: Bitmap)
 
     /** Consecutive comments on the same vox ask for the same image: the last one is kept. */
     @Volatile
-    private var last: Pair<String, Images>? = null
+    private var last: Pair<String, Bitmap>? = null
 
-    fun load(url: String): Images? {
-        last?.let { (cachedUrl, images) -> if (cachedUrl == url) return images }
-        val images = try {
+    fun load(url: String): Bitmap? {
+        last?.let { (cachedUrl, icon) -> if (cachedUrl == url) return icon }
+        val icon = try {
             download(url)?.let(::decode)
         } catch (_: Exception) {
             null
         } ?: return null
-        last = url to images
-        return images
+        last = url to icon
+        return icon
     }
 
     private fun download(url: String): ByteArray? {
@@ -63,7 +60,7 @@ object NotificationImageLoader {
         return out.toByteArray()
     }
 
-    private fun decode(bytes: ByteArray): Images? {
+    private fun decode(bytes: ByteArray): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
         val w = bounds.outWidth
@@ -71,14 +68,14 @@ object NotificationImageLoader {
         if (w <= 0 || h <= 0 || w.toLong() * h > MAX_SOURCE_PIXELS) return null
 
         var sample = 1
-        while (w / (sample * 2) >= BIG_PICTURE_PX && h / (sample * 2) >= BIG_PICTURE_PX / 2) sample *= 2
+        while (w / (sample * 2) >= LARGE_ICON_PX && h / (sample * 2) >= LARGE_ICON_PX) sample *= 2
         val bitmap = BitmapFactory.decodeByteArray(
             bytes,
             0,
             bytes.size,
             BitmapFactory.Options().apply { inSampleSize = sample },
         ) ?: return null
-        return Images(bigPicture = bitmap, largeIcon = centerSquare(bitmap, LARGE_ICON_PX))
+        return centerSquare(bitmap, LARGE_ICON_PX)
     }
 
     /** The large icon is shown square: center crop so the thumbnail is not distorted. */

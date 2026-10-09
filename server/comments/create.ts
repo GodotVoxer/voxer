@@ -339,6 +339,12 @@ export const createCommentOnVox = async (
               voxCategory: vox.category,
               voxThumbnailUrl: vox.thumbnailUrl,
               commentPublicTag: full.publicTag,
+              comment: {
+                body: full.body,
+                imageUrl: full.imageUrl,
+                videoUrl: full.videoUrl,
+                animatedImage: full.animatedImage,
+              },
               type: group.type,
             }),
           ),

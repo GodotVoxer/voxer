@@ -51,6 +51,7 @@ describe("listStaffNotificationsForUser", () => {
         createdAt,
         report: {
           details: "El usuario está haciendo spam reiterado",
+          comment: null,
         },
       },
       {
@@ -73,9 +74,39 @@ describe("listStaffNotificationsForUser", () => {
       expect.objectContaining({
         where: { userId: "u1" },
         select: expect.objectContaining({
-          report: { select: { details: true } },
+          report: { select: expect.objectContaining({ details: true }) },
         }),
       }),
     );
+  });
+
+  it("excerpts the reported comment while it exists", async () => {
+    const row = (id: string, deletedAt: Date | null) => ({
+      id,
+      message: "Denuncia",
+      thumbnailUrl: null,
+      voxId: "v1",
+      commentHash: "AB12",
+      readAt: null,
+      createdAt: new Date("2026-05-01T12:00:00Z"),
+      report: {
+        details: null,
+        comment: {
+          body: ">>ABCD1234\ncomprá acá",
+          imageUrl: null,
+          videoUrl: null,
+          animatedImage: false,
+          deletedAt,
+        },
+      },
+    });
+    vi.mocked(prisma.staffNotification.findMany).mockResolvedValue([
+      row("live", null),
+      row("deleted", new Date("2026-05-02T12:00:00Z")),
+    ] as never);
+
+    const res = await listStaffNotificationsForUser("u1");
+    expect(res[0]?.commentPreview).toBe("comprá acá");
+    expect(res[1]?.commentPreview).toBeNull();
   });
 });

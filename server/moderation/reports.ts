@@ -9,12 +9,9 @@ import { listStaffUserIds } from "@/server/moderation/permissions";
 import { sendPushToUserIds } from "@/server/push/send";
 import { buildReportPushPayload } from "@/server/push/payload";
 
-const notifyStaffOfReport = async (input: {
-  voxId: string;
-  commentPublicTag: string | null;
-  reason: ReportReason;
-  hasComment: boolean;
-}): Promise<void> => {
+const notifyStaffOfReport = async (
+  input: Parameters<typeof buildReportPushPayload>[0],
+): Promise<void> => {
   const ids = await listStaffUserIds();
   if (ids.length === 0) return;
   await Promise.allSettled([
@@ -35,18 +32,23 @@ export const createReportWithStaffNotifications = async (input: {
 > => {
   const vox = await prisma.vox.findFirst({
     where: { id: input.voxId, deletedAt: null },
-    select: { id: true, title: true, thumbnailUrl: true },
+    select: { id: true, title: true, description: true, thumbnailUrl: true },
   });
   if (!vox) return { ok: false, kind: "not_found" };
-  let commentHash: string | null = null;
-  if (input.commentId) {
-    const c = await prisma.comment.findFirst({
-      where: { id: input.commentId, voxId: input.voxId, deletedAt: null },
-      select: { publicTag: true },
-    });
-    if (!c) return { ok: false, kind: "gone" };
-    commentHash = c.publicTag;
-  }
+  const comment = input.commentId
+    ? await prisma.comment.findFirst({
+        where: { id: input.commentId, voxId: input.voxId, deletedAt: null },
+        select: {
+          publicTag: true,
+          body: true,
+          imageUrl: true,
+          videoUrl: true,
+          animatedImage: true,
+        },
+      })
+    : null;
+  if (input.commentId && !comment) return { ok: false, kind: "gone" };
+  const commentHash = comment?.publicTag ?? null;
   const reportDedupeKey = buildReportDedupeKey({
     voxId: input.voxId,
     commentId: input.commentId,
@@ -88,9 +90,11 @@ export const createReportWithStaffNotifications = async (input: {
     after(() =>
       notifyStaffOfReport({
         voxId: input.voxId,
+        voxTitle: vox.title,
+        voxDescription: vox.description,
         commentPublicTag: commentHash,
+        comment,
         reason: input.reason,
-        hasComment: Boolean(input.commentId),
       }),
     );
     return { ok: true, reportId: report.id };

@@ -9,7 +9,7 @@ import { serializeVoxDetailForClient } from "@/server/vox/serializeDetailForClie
 import { isDbConfigured } from "@/server/http/apiErrors";
 import { resolveSiteOriginUrl } from "@/server/http/resolveSiteOriginUrl";
 import { isSensitiveVoxCategory } from "@/lib/vox/sensitiveCategories";
-import { truncateOgDescription } from "@/lib/format/truncate";
+import { truncateSingleLine } from "@/lib/format/truncate";
 import { youtubeThumbnailUrl } from "@/lib/media/youtube";
 import { voxPath } from "@/lib/vox/paths";
 import { voxCommentsPreloadHref } from "@/lib/vox/commentsPreload";
@@ -39,7 +39,7 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
     notFound();
   }
 
-  const description = truncateOgDescription(voxRow.description, OG_DESCRIPTION_MAX);
+  const description = truncateSingleLine(voxRow.description, OG_DESCRIPTION_MAX);
   const thumbnail = voxRow.thumbnailUrl?.trim() ?? "";
   // Link previews render fully in the recipient's chat: NSFW shares carry no image, like the push.
   const imageUrl = isSensitiveVoxCategory(voxRow.category)

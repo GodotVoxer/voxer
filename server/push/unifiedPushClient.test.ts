@@ -43,6 +43,7 @@ describe("sendUnifiedPushMessage", () => {
     voxCategory: "General",
     voxThumbnailUrl: null,
     commentPublicTag: "ab12",
+    comment: { body: "Un comentario", imageUrl: null, videoUrl: null, animatedImage: false },
     type: "REPLY_TO_COMMENT",
   });
 

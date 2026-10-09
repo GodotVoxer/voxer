@@ -26,6 +26,8 @@ export const VOX_LIST_PAGE_MAX = 50;
 export const COMMENT_BODY_MAX = 4000;
 /** Lines allowed in a comment body after blank runs collapse: caps vertical spam. */
 export const COMMENT_BODY_MAX_LINES = 60;
+/** Comment excerpt shown in a bell row; the row clamps it to two lines anyway. */
+export const NOTIFICATION_COMMENT_PREVIEW_MAX = 200;
 export const COMMENT_DISPLAY_NAME_MAX = 80;
 export const COMMENT_MEDIA_URL_MAX = 500;
 /** Distinct `>>TAG` references allowed in one comment. */

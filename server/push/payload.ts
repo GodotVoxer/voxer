@@ -1,4 +1,6 @@
 import type { NotificationType, ReportReason } from "@prisma/client";
+import { commentNotificationText, type CommentTextSource } from "@/lib/comments/notificationText";
+import { truncateSingleLine, truncateWithEllipsis } from "@/lib/format/truncate";
 import { isSensitiveVoxCategory } from "@/lib/vox/sensitiveCategories";
 import { reportReasonLabelEs } from "@/lib/moderation/reportReasonLabels";
 import { buildVoxPanelDetailHref } from "@/lib/notifications/links";
@@ -12,7 +14,10 @@ export type VoxerPushPayload = {
   kind: VoxerPushKind;
   channel: VoxerPushChannel;
   title: string;
+  /** One line: what a collapsed notification shows. */
   body: string;
+  /** The longer text of an expanded notification; absent when `body` already says it all. */
+  expandedBody?: string;
   /** Relative path: the app joins it with its own origin and checks the host before navigating. */
   path: string;
   /** Collapses several notifications of the same thread into one row. */
@@ -26,10 +31,38 @@ const TITLE_BY_TYPE: Record<NotificationType, string> = {
   COMMENT_ON_FOLLOWED_VOX: "Comentaron un vox que seguís",
 };
 
-const PUSH_TITLE_MAX = 60;
+const TITLE_WITH_VOX_BY_TYPE: Record<NotificationType, (quotedVoxTitle: string) => string> = {
+  REPLY_TO_COMMENT: (vox) => `Te respondieron en ${vox}`,
+  COMMENT_ON_YOUR_VOX: (vox) => `Comentaron tu vox ${vox}`,
+  COMMENT_ON_FOLLOWED_VOX: (vox) => `Nuevo comentario en ${vox}`,
+};
 
-const truncate = (value: string, max: number): string =>
-  value.length > max ? `${value.slice(0, max - 1)}…` : value;
+const PUSH_VOX_TITLE_MAX = 60;
+const PUSH_BODY_MAX = 140;
+/**
+ * FCM and Web Push cap a message near 4 KB. A UTF-16 unit takes at most 3 bytes in UTF-8, so this
+ * leaves room for every other field whatever the alphabet.
+ */
+const PUSH_EXPANDED_BODY_MAX = 600;
+
+const quoteVoxTitle = (voxTitle: string): string =>
+  `«${truncateSingleLine(voxTitle, PUSH_VOX_TITLE_MAX)}»`;
+
+/** `footer` survives the cut: it is the context of a text that may be long. */
+const pushTexts = (
+  line: string,
+  full: string,
+  footer = "",
+): Pick<VoxerPushPayload, "body" | "expandedBody"> => {
+  const body = truncateSingleLine(line, PUSH_BODY_MAX);
+  const expandedBody = `${truncateWithEllipsis(full, PUSH_EXPANDED_BODY_MAX - footer.length)}${footer}`;
+  return expandedBody === body ? { body } : { body, expandedBody };
+};
+
+const commentPushTexts = (comment: CommentTextSource, footer?: string) => {
+  const text = commentNotificationText(comment);
+  return pushTexts(text, text, footer);
+};
 
 export const buildCommentPushPayload = (input: {
   voxId: string;
@@ -37,9 +70,10 @@ export const buildCommentPushPayload = (input: {
   voxCategory: string;
   voxThumbnailUrl: string | null;
   commentPublicTag: string | null;
+  comment: CommentTextSource;
   type: NotificationType;
 }): VoxerPushPayload => {
-  // Shown on the lock screen: sensitive categories hide the vox title, not only the thumbnail.
+  // Shown on the lock screen: sensitive categories hide which vox it is, title and thumbnail.
   const sensitive = isSensitiveVoxCategory(input.voxCategory);
   const anchorUpper = input.commentPublicTag ? input.commentPublicTag.toUpperCase() : null;
   const channel = input.type === "REPLY_TO_COMMENT" ? "replies" : "comments";
@@ -47,27 +81,39 @@ export const buildCommentPushPayload = (input: {
     v: "1",
     kind: "comment",
     channel,
-    title: TITLE_BY_TYPE[input.type],
-    body: sensitive
-      ? "Abrí la app para verlo."
-      : `En «${truncate(input.voxTitle, PUSH_TITLE_MAX)}»`,
+    title: sensitive
+      ? TITLE_BY_TYPE[input.type]
+      : TITLE_WITH_VOX_BY_TYPE[input.type](quoteVoxTitle(input.voxTitle)),
+    ...commentPushTexts(input.comment),
     path: buildVoxPanelDetailHref({ voxId: input.voxId, anchorUpper }),
     collapseKey: `${channel}:vox:${input.voxId}`,
     ...(sensitive || !input.voxThumbnailUrl ? {} : { thumbnailUrl: input.voxThumbnailUrl }),
   };
 };
 
+/**
+ * Staff only, and in every category: the point is deciding from the notification whether the
+ * report needs attention now. Text only; the reported media never travels.
+ */
 export const buildReportPushPayload = (input: {
   voxId: string;
+  voxTitle: string;
+  voxDescription: string;
   commentPublicTag: string | null;
+  /** The reported comment; null when the report is on the vox itself. */
+  comment: CommentTextSource | null;
   reason: ReportReason;
-  hasComment: boolean;
 }): VoxerPushPayload => ({
   v: "1",
   kind: "report",
   channel: "reports",
-  title: "Nueva denuncia",
-  body: `${input.hasComment ? "Comentario" : "Vox"} denunciado — ${reportReasonLabelEs(input.reason)}`,
+  title: `${input.comment ? "Comentario" : "Vox"} denunciado — ${reportReasonLabelEs(input.reason)}`,
+  ...(input.comment
+    ? commentPushTexts(input.comment, `\n\nEn ${quoteVoxTitle(input.voxTitle)}`)
+    : pushTexts(
+        input.voxTitle,
+        [input.voxTitle, input.voxDescription.trim()].filter(Boolean).join("\n\n"),
+      )),
   path: buildVoxPanelDetailHref(
     {
       voxId: input.voxId,
@@ -98,6 +144,7 @@ const buildAndroidPushData = (p: VoxerPushPayload): Record<string, string> => ({
   channel: p.channel,
   title: p.title,
   body: p.body,
+  ...(p.expandedBody ? { expandedBody: p.expandedBody } : {}),
   path: p.path,
   collapseKey: p.collapseKey,
   ...(p.thumbnailUrl ? { thumbnailUrl: p.thumbnailUrl } : {}),
@@ -121,13 +168,16 @@ export const buildFcmV1Message = (token: string, p: VoxerPushPayload): FcmV1Mess
 export const buildUnifiedPushData = (p: VoxerPushPayload): string =>
   JSON.stringify(buildAndroidPushData(p));
 
-/** Read by `public/push-sw.js`; end-to-end encrypted (RFC 8291), the push service cannot read it. */
+/**
+ * Read by `public/push-sw.js`; end-to-end encrypted (RFC 8291), the push service cannot read it.
+ * A web notification has a single body, which the system cuts and expands on its own.
+ */
 export const buildWebPushData = (p: VoxerPushPayload): string =>
   JSON.stringify({
     v: p.v,
     kind: p.kind,
     title: p.title,
-    body: p.body,
+    body: p.expandedBody ?? p.body,
     path: p.path,
     tag: p.collapseKey,
     ...(p.thumbnailUrl ? { image: p.thumbnailUrl } : {}),

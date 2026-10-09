@@ -18,13 +18,26 @@ Todos se guardan en `PushDevice` (`platform` = `ANDROID`, `UNIFIED_PUSH` o `WEB`
 
 Los destinatarios salen de las mismas filas que la campana (`buildCommentNotificationRows` en `server/notifications/recipients.ts`), así que silenciar un vox o las respuestas a un comentario apaga a la vez la campana, el aviso en vivo y todos los canales de push.
 
-## Anonimato
+## Anonimato y contenido
 
-Los mensajes solo llevan datos, sin la clave `notification`, así la app o el service worker arman la fila visible. Nunca llevan quién actuó, el dueño, el autor, el nombre de usuario, el texto del comentario, IPs, quién denunció ni ids internos. Las categorías del grupo `nsfw` ocultan el título y la miniatura, porque las notificaciones se ven en la pantalla de bloqueo. `server/push/payload.test.ts` lo fija estructuralmente.
+Los mensajes solo llevan datos, sin la clave `notification`, así la app o el service worker arman la fila visible. Nunca llevan quién actuó, el dueño, el autor, el nombre de usuario, IPs, quién denunció, el detalle que escribió el denunciante ni ids internos. `server/push/payload.test.ts` lo fija estructuralmente.
+
+Sí llevan texto que ya es público en el sitio, para que no haga falta abrir la notificación:
+
+- **Comentarios.** El título dice el motivo y el vox («Te respondieron en «…»») y el cuerpo es el comentario, sin los `>>TAG` (`lib/comments/notificationText.ts`). Un comentario sin texto dice «Imagen», «Video» o «GIF»; el archivo nunca viaja.
+- **Denuncias** (solo staff). El título dice qué se denunció y el motivo; el cuerpo es el comentario denunciado o el título del vox, en todas las categorías.
+
+`body` es una línea de hasta 140 caracteres para la fila contraída. `expandedBody` es el texto de la fila expandida, de hasta 600: el comentario completo, o el título y la descripción del vox denunciado. Solo se envía si agrega algo a `body`. Los navegadores tienen un único cuerpo que el sistema corta y expande por su cuenta, así que reciben el largo. El tope sale del límite de 4 KB de FCM y de Web Push, y vale para cualquier alfabeto.
+
+Las notificaciones se ven en la pantalla de bloqueo. Por eso, en las categorías del grupo `nsfw` el push de un comentario no dice de qué vox es: no lleva el título ni la miniatura, solo el texto del comentario. En Android con FCM el contenido pasa por Google sin cifrado de extremo a extremo; Web Push y UnifiedPush van cifrados hasta el dispositivo.
 
 ## Agrupado
 
-Los comentarios del mismo vox comparten una sola fila de notificación por canal (`collapseKey`). Cada comentario nuevo la reemplaza con un contador actualizado («N nuevos»), lleva al último comentario y muestra la miniatura del vox una sola vez. Las denuncias tienen una fila por contenido denunciado. Android tiene canales separados para comentarios en vox seguidos, respuestas y denuncias (solo staff), así cada usuario los configura por separado.
+Los comentarios del mismo vox comparten una sola fila de notificación por canal (`collapseKey`). Cada comentario nuevo la reemplaza con su texto y un contador actualizado («N nuevos»), lleva al último comentario y muestra la miniatura del vox una sola vez. Las denuncias tienen una fila por contenido denunciado. Android tiene canales separados para comentarios en vox seguidos, respuestas y denuncias (solo staff), así cada usuario los configura por separado.
+
+## Campana
+
+Cada fila de la campana muestra debajo del mensaje un fragmento del comentario, y la de denuncias el del comentario denunciado. El fragmento no se guarda en la notificación: se lee del comentario en cada listado, así un comentario borrado deja de mostrarse y uno editado se ve como quedó.
 
 ## Escritorio
 
@@ -40,6 +53,8 @@ Los comentarios del mismo vox comparten una sola fila de notificación por canal
 ## Android
 
 La app guarda su token y la página lo registra con `POST /api/push/devices` (ver el [README de Android](../android/README.md)). El token se registra solo después de que el usuario acepta el permiso de notificaciones.
+
+Expandida, la fila muestra el texto completo (`BigTextStyle`) y la miniatura del vox queda chica a la derecha. Las versiones anteriores a la que lee `expandedBody` muestran la línea de `body`.
 
 Cuando un vox se abre dentro de la app, la página le pide que borre las notificaciones de ese vox (`clearVoxNotifications`, desde `hooks/notifications/useClearNativeVoxNotifications.ts`), junto con el resumen del grupo si queda vacío. Lo vuelve a pedir si llega un push con el vox abierto o al volver a la app. Cada fila guarda el id del vox; las que mostraron versiones anteriores a la 1.1.1 se reconocen por su `collapseKey`, salvo las de denuncias, que se van recién cuando el contador llega a cero.
 

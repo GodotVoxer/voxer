@@ -18,6 +18,23 @@ describe("mapUserNotificationsToVirtualRows", () => {
       },
     ]);
     expect(rows[0]?.anchorUpper).toBe("AB12");
+    expect(rows[0]?.commentPreview).toBeNull();
+  });
+
+  it("carries the comment excerpt", () => {
+    const rows = mapUserNotificationsToVirtualRows([
+      {
+        id: "1",
+        readAt: null,
+        voxId: "v1",
+        message: "m",
+        thumbnailUrl: null,
+        commentPublicTag: "ab12",
+        commentPreview: "No estoy de acuerdo",
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+    expect(rows[0]?.commentPreview).toBe("No estoy de acuerdo");
   });
 
   it("null anchor when no comment tag", () => {
@@ -64,8 +81,10 @@ describe("mapStaffNotificationsToVirtualRows", () => {
         readAt: null,
         createdAt: "2026-01-01T00:00:00.000Z",
         reportDetails: "El contenido incluye enlaces de estafa",
+        commentPreview: "comprá acá",
       },
     ]);
     expect(rows[0]?.reportDetails).toBe("El contenido incluye enlaces de estafa");
+    expect(rows[0]?.commentPreview).toBe("comprá acá");
   });
 });

@@ -7,6 +7,7 @@ export type UserNotificationPanelRow = {
   thumbnailUrl: string | null;
   voxId: string;
   commentPublicTag: string | null;
+  commentPreview?: string | null;
   readAt: string | null;
   createdAt: string;
 };

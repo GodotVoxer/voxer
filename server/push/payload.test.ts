@@ -7,29 +7,81 @@ import {
   buildWebPushData,
 } from "@/server/push/payload";
 
+const textComment = (body: string) => ({
+  body,
+  imageUrl: null,
+  videoUrl: null,
+  animatedImage: false,
+});
+
 const base = {
   voxId: "vox123",
   voxTitle: "Un título cualquiera",
   voxCategory: "General",
   voxThumbnailUrl: "https://media.example.com/uploads/2026/09/a.thumb.webp",
   commentPublicTag: "ab12",
+  comment: textComment(">>ABCD1234\nNo estoy de acuerdo"),
   type: "REPLY_TO_COMMENT",
 } as const;
 
+const reportBase = {
+  voxId: "vox123",
+  voxTitle: "Un título cualquiera",
+  voxDescription: "La descripción del vox",
+  commentPublicTag: null,
+  comment: null,
+  reason: "GORE",
+} as const;
+
+const commentReport = {
+  ...reportBase,
+  commentPublicTag: "ab12",
+  comment: textComment("El comentario denunciado"),
+} as const;
+
 describe("buildCommentPushPayload", () => {
-  it("titles the push by notification type", () => {
+  it("titles the push by notification type and vox", () => {
     expect(buildCommentPushPayload(base)).toMatchObject({
-      title: "Te respondieron",
+      title: "Te respondieron en «Un título cualquiera»",
       channel: "replies",
     });
     expect(buildCommentPushPayload({ ...base, type: "COMMENT_ON_YOUR_VOX" })).toMatchObject({
-      title: "Comentaron tu vox",
+      title: "Comentaron tu vox «Un título cualquiera»",
       channel: "comments",
     });
     expect(buildCommentPushPayload({ ...base, type: "COMMENT_ON_FOLLOWED_VOX" })).toMatchObject({
-      title: "Comentaron un vox que seguís",
+      title: "Nuevo comentario en «Un título cualquiera»",
       channel: "comments",
     });
+  });
+
+  it("carries the comment text, without the reply tokens", () => {
+    const p = buildCommentPushPayload(base);
+    expect(p.body).toBe("No estoy de acuerdo");
+    expect(p.expandedBody).toBeUndefined();
+  });
+
+  it("previews a long comment in one line and keeps its shape for the expanded view", () => {
+    const body = `primera línea\n${"x".repeat(300)}`;
+    const p = buildCommentPushPayload({ ...base, comment: textComment(body) });
+    expect(p.body.length).toBe(140);
+    expect(p.body.startsWith("primera línea xxx")).toBe(true);
+    expect(p.body.endsWith("…")).toBe(true);
+    expect(p.expandedBody).toBe(body);
+  });
+
+  it("caps the expanded text", () => {
+    const p = buildCommentPushPayload({ ...base, comment: textComment("x".repeat(4000)) });
+    expect(p.expandedBody?.length).toBe(600);
+    expect(p.expandedBody?.endsWith("…")).toBe(true);
+  });
+
+  it("labels a comment without text", () => {
+    const p = buildCommentPushPayload({
+      ...base,
+      comment: { ...textComment(""), imageUrl: "/uploads/a.webp" },
+    });
+    expect(p.body).toBe("Imagen");
   });
 
   it("builds the same deep link as the bell, with an uppercase tag", () => {
@@ -40,9 +92,9 @@ describe("buildCommentPushPayload", () => {
     expect(buildCommentPushPayload({ ...base, commentPublicTag: null }).path).toBe("/vox/vox123");
   });
 
-  it("truncates long titles to 60 characters", () => {
+  it("truncates long vox titles to 60 characters", () => {
     const p = buildCommentPushPayload({ ...base, voxTitle: "x".repeat(200) });
-    const inner = p.body.slice("En «".length, -1);
+    const inner = p.title.slice("Te respondieron en «".length, -1);
     expect(inner.length).toBe(60);
     expect(inner.endsWith("…")).toBe(true);
   });
@@ -54,18 +106,19 @@ describe("buildCommentPushPayload", () => {
     );
   });
 
-  it("hides the vox title and thumbnail in NSFW categories", () => {
+  it("hides the vox title and thumbnail in NSFW categories, but not the comment", () => {
     for (const category of ["Porno", "Gay", "Hentai", "Fetiches"]) {
       const p = buildCommentPushPayload({ ...base, voxCategory: category });
-      expect(p.body).toBe("Abrí la app para verlo.");
-      expect(p.body).not.toContain(base.voxTitle);
+      expect(p.title).toBe("Te respondieron");
+      expect(p.body).toBe("No estoy de acuerdo");
+      expect(JSON.stringify(p)).not.toContain(base.voxTitle);
       expect(p.thumbnailUrl).toBeUndefined();
     }
   });
 
   it("keeps title and thumbnail outside NSFW", () => {
     const p = buildCommentPushPayload(base);
-    expect(p.body).toContain(base.voxTitle);
+    expect(p.title).toContain(base.voxTitle);
     expect(p.thumbnailUrl).toBe(base.voxThumbnailUrl);
   });
 
@@ -78,55 +131,46 @@ describe("buildCommentPushPayload", () => {
 
 describe("buildReportPushPayload", () => {
   it("opens the reported content and asks to mark it read", () => {
-    const p = buildReportPushPayload({
-      voxId: "vox123",
-      commentPublicTag: "ab12",
-      reason: "GORE",
-      hasComment: true,
-    });
+    const p = buildReportPushPayload(commentReport);
     expect(p.channel).toBe("reports");
     expect(p.path).toBe("/vox/vox123?denuncia=push#AB12");
     expect(p.collapseKey).toBe("reports");
   });
 
   it("a report on a vox opens the vox without an anchor", () => {
-    expect(
-      buildReportPushPayload({
-        voxId: "vox123",
-        commentPublicTag: null,
-        reason: "GORE",
-        hasComment: false,
-      }).path,
-    ).toBe("/vox/vox123?denuncia=push");
+    expect(buildReportPushPayload(reportBase).path).toBe("/vox/vox123?denuncia=push");
   });
 
   it("tells vox from comment and translates the reason", () => {
-    expect(
-      buildReportPushPayload({
-        voxId: "v1",
-        commentPublicTag: "ab12",
-        reason: "SPAM",
-        hasComment: true,
-      }).body,
-    ).toBe("Comentario denunciado — Spam");
-    expect(
-      buildReportPushPayload({
-        voxId: "v1",
-        commentPublicTag: null,
-        reason: "ILLEGAL_CONTENT",
-        hasComment: false,
-      }).body,
-    ).toBe("Vox denunciado — Contenido ilegal");
+    expect(buildReportPushPayload({ ...commentReport, reason: "SPAM" }).title).toBe(
+      "Comentario denunciado — Spam",
+    );
+    expect(buildReportPushPayload({ ...reportBase, reason: "ILLEGAL_CONTENT" }).title).toBe(
+      "Vox denunciado — Contenido ilegal",
+    );
   });
 
-  it("does not leak the reported vox title", () => {
-    const p = buildReportPushPayload({
-      voxId: "v1",
-      commentPublicTag: null,
-      reason: "GORE",
-      hasComment: false,
-    });
-    expect(JSON.stringify(p)).not.toContain("título");
+  it("shows the reported vox: title collapsed, description when expanded", () => {
+    const p = buildReportPushPayload(reportBase);
+    expect(p.body).toBe("Un título cualquiera");
+    expect(p.expandedBody).toBe("Un título cualquiera\n\nLa descripción del vox");
+  });
+
+  it("a vox without description has nothing to expand", () => {
+    const p = buildReportPushPayload({ ...reportBase, voxDescription: "  " });
+    expect(p.expandedBody).toBeUndefined();
+  });
+
+  it("shows the reported comment, and which vox it is in when expanded", () => {
+    const p = buildReportPushPayload(commentReport);
+    expect(p.body).toBe("El comentario denunciado");
+    expect(p.expandedBody).toBe("El comentario denunciado\n\nEn «Un título cualquiera»");
+  });
+
+  it("keeps the vox of a long reported comment within the cap", () => {
+    const p = buildReportPushPayload({ ...commentReport, comment: textComment("x".repeat(4000)) });
+    expect(p.expandedBody?.length).toBe(600);
+    expect(p.expandedBody?.endsWith("…\n\nEn «Un título cualquiera»")).toBe(true);
   });
 });
 
@@ -140,15 +184,32 @@ describe("anonymity invariant", () => {
   });
 
   it("a report payload never carries the reporter or the report id", () => {
-    const p = buildReportPushPayload({
-      voxId: "v1",
-      commentPublicTag: "publica1",
-      reason: "OTHER",
-      hasComment: true,
-    });
+    const p = buildReportPushPayload(commentReport);
     const json = JSON.stringify(p).toLowerCase();
     for (const forbidden of ["reporter", "reportid", "userid", "ip", "commentid"]) {
       expect(json).not.toContain(forbidden);
+    }
+  });
+});
+
+describe("message size", () => {
+  // Three UTF-8 bytes per UTF-16 unit: the worst case for the provider's 4 KB cap.
+  const wide = (n: number) => "漢".repeat(n);
+  const worstCases = [
+    buildCommentPushPayload({ ...base, voxTitle: wide(200), comment: textComment(wide(4000)) }),
+    buildReportPushPayload({
+      ...commentReport,
+      voxTitle: wide(200),
+      comment: textComment(wide(4000)),
+    }),
+    buildReportPushPayload({ ...reportBase, voxTitle: wide(200), voxDescription: wide(4000) }),
+  ];
+
+  it("stays under the provider cap with the longest content in any alphabet", () => {
+    for (const p of worstCases) {
+      const fcm = JSON.stringify(buildFcmV1Message("tok", p).data);
+      expect(Buffer.byteLength(fcm)).toBeLessThan(3500);
+      expect(Buffer.byteLength(buildWebPushData(p))).toBeLessThan(3500);
     }
   });
 });
@@ -166,19 +227,19 @@ describe("buildFcmV1Message", () => {
 
   it("passes collapse_key and uses a TTL per type", () => {
     const comment = buildFcmV1Message("tok", buildCommentPushPayload(base));
-    const report = buildFcmV1Message(
-      "tok",
-      buildReportPushPayload({
-        voxId: "v1",
-        commentPublicTag: null,
-        reason: "GORE",
-        hasComment: false,
-      }),
-    );
+    const report = buildFcmV1Message("tok", buildReportPushPayload(reportBase));
     expect(comment.android.collapse_key).toBe("replies:vox:vox123");
     expect(comment.android.ttl).toBe("43200s");
     expect(report.android.ttl).toBe("86400s");
     expect(comment.android.priority).toBe("HIGH");
+  });
+
+  it("sends the expanded text only when there is one", () => {
+    expect(buildFcmV1Message("tok", buildCommentPushPayload(base)).data).not.toHaveProperty(
+      "expandedBody",
+    );
+    const long = buildCommentPushPayload({ ...base, comment: textComment("x".repeat(300)) });
+    expect(buildFcmV1Message("tok", long).data.expandedBody).toBe(long.expandedBody);
   });
 
   it("omits thumbnailUrl from data when there is no thumbnail", () => {
@@ -188,6 +249,11 @@ describe("buildFcmV1Message", () => {
 });
 
 describe("buildWebPushData", () => {
+  it("uses the expanded text as the body, since the system cuts it on its own", () => {
+    const p = buildCommentPushPayload({ ...base, comment: textComment("x".repeat(300)) });
+    expect(JSON.parse(buildWebPushData(p)).body).toBe(p.expandedBody);
+  });
+
   it("carries the same text, deep link and image as the Android push", () => {
     const p = buildCommentPushPayload(base);
     expect(JSON.parse(buildWebPushData(p))).toEqual({

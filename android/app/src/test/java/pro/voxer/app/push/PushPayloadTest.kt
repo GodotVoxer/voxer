@@ -12,18 +12,26 @@ class PushPayloadTest {
             "v" to "1",
             "kind" to "comment",
             "channel" to "replies",
-            "title" to "Te respondieron",
-            "body" to "En «un vox»",
+            "title" to "Te respondieron en «un vox»",
+            "body" to "No estoy de acuerdo",
             "path" to "/vox/abc#AB12",
         ) + over
 
     @Test
     fun `reads a valid payload`() {
         val p = PushPayload.parse(valid())!!
-        assertEquals("Te respondieron", p.title)
+        assertEquals("Te respondieron en «un vox»", p.title)
         assertEquals("/vox/abc#AB12", p.path)
         assertEquals(NotificationChannels.REPLIES, p.channelId)
         assertNull(p.thumbnailUrl)
+        assertNull(p.expandedBody)
+    }
+
+    @Test
+    fun `reads the expanded text when the server sends one`() {
+        val p = PushPayload.parse(valid("expandedBody" to "No estoy de acuerdo\nporque no"))!!
+        assertEquals("No estoy de acuerdo\nporque no", p.expandedBody)
+        assertNull(PushPayload.parse(valid("expandedBody" to " "))!!.expandedBody)
     }
 
     @Test

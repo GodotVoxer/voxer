@@ -1,3 +1,5 @@
+import { commentNotificationLine } from "@/lib/comments/notificationText";
+import { NOTIFICATION_COMMENT_PREVIEW_MAX } from "@/lib/limits";
 import { prisma } from "@/server/db/prisma";
 
 export type StaffNotificationListItem = {
@@ -9,6 +11,8 @@ export type StaffNotificationListItem = {
   readAt: string | null;
   createdAt: string;
   reportDetails?: string | null;
+  /** The reported comment, while it exists. */
+  commentPreview: string | null;
 };
 
 export const listStaffNotificationsForUser = async (
@@ -30,6 +34,15 @@ export const listStaffNotificationsForUser = async (
       report: {
         select: {
           details: true,
+          comment: {
+            select: {
+              body: true,
+              imageUrl: true,
+              videoUrl: true,
+              animatedImage: true,
+              deletedAt: true,
+            },
+          },
         },
       },
     },
@@ -43,6 +56,10 @@ export const listStaffNotificationsForUser = async (
     readAt: r.readAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
     reportDetails: r.report?.details ?? null,
+    commentPreview:
+      r.report?.comment && !r.report.comment.deletedAt
+        ? commentNotificationLine(r.report.comment, NOTIFICATION_COMMENT_PREVIEW_MAX)
+        : null,
   }));
 };
 

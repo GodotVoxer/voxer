@@ -40,7 +40,7 @@ El Worker valida los ids de sala, compara el secreto de emisión en tiempo const
 
 ## Push
 
-Los mensajes no llevan identidad ni contenido (ver [notificaciones push](push.md)). El servidor solo hace POST a endpoints de servicios de push conocidos o, para UnifiedPush, a direcciones públicas; nunca a cualquier host que registre un cliente.
+Los mensajes no llevan identidad. Llevan el texto del comentario, o del contenido denunciado para el staff, que ya es público en el sitio; nunca archivos, y el push de un comentario en una categoría +18 tampoco dice de qué vox es (ver [notificaciones push](push.md#anonimato-y-contenido)). El servidor solo hace POST a endpoints de servicios de push conocidos o, para UnifiedPush, a direcciones públicas; nunca a cualquier host que registre un cliente.
 
 ## App Android
 

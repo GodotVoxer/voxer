@@ -6,6 +6,8 @@ data class PushPayload(
     val channelId: String,
     val title: String,
     val body: String,
+    /** Full text for the expanded row; older backends do not send it. */
+    val expandedBody: String?,
     val path: String,
     val thumbnailUrl: String?,
     /** Server grouping key (`replies:vox:<id>`); comments on the same vox share one row. */
@@ -55,6 +57,7 @@ data class PushPayload(
                 channelId = channelId,
                 title = title,
                 body = body,
+                expandedBody = data["expandedBody"]?.takeIf { it.isNotBlank() },
                 path = path,
                 thumbnailUrl = data["thumbnailUrl"]?.takeIf { it.startsWith("https://") },
                 threadKey = threadKey,

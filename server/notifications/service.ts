@@ -1,3 +1,5 @@
+import { commentNotificationLine } from "@/lib/comments/notificationText";
+import { NOTIFICATION_COMMENT_PREVIEW_MAX } from "@/lib/limits";
 import { prisma } from "@/server/db/prisma";
 export type NotificationListItem = {
   id: string;
@@ -6,6 +8,8 @@ export type NotificationListItem = {
   thumbnailUrl: string | null;
   voxId: string;
   commentPublicTag: string | null;
+  /** Read on every listing, so a deleted comment stops showing and an edited one is current. */
+  commentPreview: string | null;
   readAt: string | null;
   createdAt: string;
 };
@@ -26,7 +30,14 @@ export const listNotificationsForUser = async (
       readAt: true,
       createdAt: true,
       relatedComment: {
-        select: { publicTag: true },
+        select: {
+          publicTag: true,
+          body: true,
+          imageUrl: true,
+          videoUrl: true,
+          animatedImage: true,
+          deletedAt: true,
+        },
       },
     },
   });
@@ -37,6 +48,10 @@ export const listNotificationsForUser = async (
     thumbnailUrl: r.thumbnailUrl,
     voxId: r.voxId,
     commentPublicTag: r.relatedComment?.publicTag ?? null,
+    commentPreview:
+      r.relatedComment && !r.relatedComment.deletedAt
+        ? commentNotificationLine(r.relatedComment, NOTIFICATION_COMMENT_PREVIEW_MAX)
+        : null,
     readAt: r.readAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
   }));

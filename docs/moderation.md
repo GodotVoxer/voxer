@@ -54,4 +54,4 @@ Mientras está activo, ninguna ruta de subida acepta archivos (`server/upload/gu
 
 ## Denuncias
 
-Los usuarios denuncian vox y comentarios. Las denuncias se deduplican por denunciante, publicación y motivo, le avisan al staff por su propia campana y su propio canal de push, y llevan directo al contenido denunciado. Como en las notificaciones, el panel muestra primero las no vistas y, dentro de cada grupo, las más nuevas arriba.
+Los usuarios denuncian vox y comentarios. Las denuncias se deduplican por denunciante, publicación y motivo, le avisan al staff por su propia campana y su propio canal de push, muestran ahí mismo el comentario o el título del vox denunciado, y llevan directo al contenido. Como en las notificaciones, el panel muestra primero las no vistas y, dentro de cada grupo, las más nuevas arriba.

@@ -45,7 +45,10 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-/** One notification per vox (the `tag` is the server's collapse key): later comments replace it and bump the counter without repeating the image. */
+/**
+ * One notification per vox (the `tag` is the server's collapse key): later comments replace it and bump
+ * the counter without repeating the image. The counter goes first because the system cuts a long body.
+ */
 self.addEventListener("push", (event) => {
   const payload = readPayload(event);
   if (!payload) return;
@@ -58,7 +61,7 @@ self.addEventListener("push", (event) => {
       );
       const count = previousCount + 1;
       await self.registration.showNotification(payload.title, {
-        body: count > 1 ? `${payload.body} · ${count} nuevos` : payload.body,
+        body: count > 1 ? `${count} nuevos · ${payload.body}` : payload.body,
         tag: payload.tag,
         renotify: true,
         // macOS only shows `icon`; Windows and Linux show `image` large below the text.

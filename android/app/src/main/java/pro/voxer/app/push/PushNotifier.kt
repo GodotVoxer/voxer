@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
@@ -45,13 +44,15 @@ object PushNotifier {
         if (!manager.areNotificationsEnabled()) return
 
         val count = activeCount(context, payload.stableId) + 1
-        val images = payload.thumbnailUrl?.let(NotificationImageLoader::load)
+        val thumbnail = payload.thumbnailUrl?.let(NotificationImageLoader::load)
 
         val builder = NotificationCompat.Builder(context, payload.channelId)
             .setSmallIcon(R.drawable.ic_stat_voxer)
             .setColor(ContextCompat.getColor(context, R.color.voxer_brand))
             .setContentTitle(payload.title)
             .setContentText(payload.body)
+            // Expanded, the row is for reading the comment: the vox image stays as the thumbnail.
+            .setStyle(NotificationCompat.BigTextStyle().bigText(payload.expandedBody ?: payload.body))
             .setNumber(count)
             .addExtras(
                 Bundle().apply {
@@ -71,16 +72,7 @@ object PushNotifier {
             .setContentIntent(pendingIntent)
 
         if (count > 1) builder.setSubText(context.getString(R.string.notification_new_count, count))
-        if (images != null) {
-            // Collapsed: thumbnail on the right. Expanded: the large image, without repeating the icon.
-            builder
-                .setLargeIcon(images.largeIcon)
-                .setStyle(
-                    NotificationCompat.BigPictureStyle()
-                        .bigPicture(images.bigPicture)
-                        .bigLargeIcon(null as Bitmap?),
-                )
-        }
+        if (thumbnail != null) builder.setLargeIcon(thumbnail)
 
         // Same id for the whole vox: the row is replaced (deep linking to the latest comment) instead of
         // stacking one per comment.

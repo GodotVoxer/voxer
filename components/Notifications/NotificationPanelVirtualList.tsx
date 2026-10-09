@@ -51,7 +51,14 @@ const PanelRowLink = ({
             </div>
           )}
         </div>
-        <p className="min-w-0 flex-1 text-sm leading-snug text-fg-soft">{row.message}</p>
+        <div className="min-w-0 flex-1 text-sm leading-snug">
+          <p className="text-fg-soft">{row.message}</p>
+          {row.commentPreview && (
+            <p className="mt-1 line-clamp-2 border-l-2 border-fg/20 pl-2 break-words text-fg-muted">
+              {row.commentPreview}
+            </p>
+          )}
+        </div>
       </Link>
       {hasDetails && row.reportDetails && (
         <ReportDetailInfoPopover details={row.reportDetails.trim()} />

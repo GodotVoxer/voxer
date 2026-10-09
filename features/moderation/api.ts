@@ -27,6 +27,7 @@ export type StaffNotificationRow = {
   readAt: string | null;
   createdAt: string;
   reportDetails?: string | null;
+  commentPreview?: string | null;
 };
 
 export const fetchStaffNotifications = async (): Promise<StaffNotificationRow[]> => {
