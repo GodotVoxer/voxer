@@ -63,6 +63,11 @@ export const mockModerationActions = [
     commentIds: Array.from({ length: 11 }, (_, i) => "bulk-" + i),
     banContentLabel: "Todo el historial",
   }),
+  row("demo-ban", "BAN_USER", {
+    reason:
+      "Motivo de ban largo que tiene que poder leerse entero desde el celular " + "x".repeat(80),
+    clientNetworkBlock: true,
+  }),
 ];
 export const mockModerationPreview = (
   id: string,

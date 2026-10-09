@@ -14,7 +14,7 @@ export const ModerationActionDetailCell = ({
   const [expanded, setExpanded] = useState(false);
   const detailText = moderationActionPayloadSummary(actionRow);
   return (
-    <td className="max-w-[280px] p-2 text-fg-secondary [overflow-wrap:anywhere]">
+    <td className="min-w-[240px] max-w-[280px] break-words p-2 text-fg-secondary">
       {moderationActionTargets(actionRow.payload).length ? (
         <button
           type="button"

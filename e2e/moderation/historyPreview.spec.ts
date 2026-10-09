@@ -39,3 +39,17 @@ test("a bulk delete paginates comments and vox", async ({ page }) => {
   await expect(dialog.getByRole("button", { name: "Siguiente" })).toBeDisabled();
   await expect.poll(() => dialog.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
 });
+
+test("the detail keeps a readable width and expands to the full text on tap", async ({ page }) => {
+  await page.goto("/moderacion");
+  const detail = page.getByRole("button", { name: /Motivo de ban largo/ });
+  await expect(detail).toBeVisible();
+  expect((await detail.locator("xpath=ancestor::td").boundingBox())!.width).toBeGreaterThanOrEqual(
+    240,
+  );
+  const collapsedHeight = (await detail.boundingBox())!.height;
+  await detail.click();
+  await expect(detail).toHaveAttribute("aria-expanded", "true");
+  await expect(detail).toContainText("Restricción por huella de red");
+  expect((await detail.boundingBox())!.height).toBeGreaterThan(collapsedHeight);
+});
