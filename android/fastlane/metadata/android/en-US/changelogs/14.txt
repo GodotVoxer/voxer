@@ -1,0 +1,1 @@
+- Notifications show the comment, in full when expanded.
