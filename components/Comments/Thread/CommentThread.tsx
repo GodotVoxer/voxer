@@ -7,14 +7,13 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import type { CommentPublic } from "@/lib/vox/types";
 import type { CommentTagBackref } from "@/features/comments/backrefs";
 import { estimateCommentRowHeight } from "@/features/comments/threadEstimate";
 import { rangeWithPinnedIndexes } from "@/features/comments/threadRange";
 import { CommentMediaActivityProvider } from "@/components/Comments/Thread/CommentMediaActivity";
 import { CommentRow } from "@/components/Comments/Comment/CommentRow";
-import { useKeepScrollOnVirtualizerMount } from "@/hooks/comments/useKeepScrollOnVirtualizerMount";
+import { useThreadVirtualizer } from "@/hooks/comments/useThreadVirtualizer";
 import type { CommentThreadHandle } from "@/features/comments/threadHandle";
 import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 type Props = {
@@ -27,10 +26,10 @@ type Props = {
   onTagClick: (tag: string) => void;
   onOpenReplies: (publicTag: string) => void;
   scrollParentRef: RefObject<HTMLDivElement | null>;
-  /** Defaults to `scrollParentRef.current`; on mobile usually `document.scrollingElement`. */
-  getScrollElement?: () => HTMLElement | null;
-  /** Offset (px) between the start of the scroll element and the start of the virtualized thread. */
-  scrollMargin?: number;
+  /** The page scrolls (mobile) instead of `scrollParentRef`. */
+  documentScroll: boolean;
+  /** Offset (px) between the start of the scroll and the start of the thread; `null` until measured. */
+  scrollMargin: number | null;
   onReportComment?: (comment: CommentPublic) => void;
   showReportOnComments?: boolean;
   onCommentRepliesMutedChange?: (commentId: string, muted: boolean) => void;
@@ -54,8 +53,8 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
     onTagClick,
     onOpenReplies,
     scrollParentRef,
-    getScrollElement: getScrollElementProp,
-    scrollMargin = 0,
+    documentScroll,
+    scrollMargin,
     onReportComment,
     showReportOnComments,
     onCommentRepliesMutedChange,
@@ -69,11 +68,6 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
   },
   ref,
 ) {
-  const resolveScrollElement = useCallback(
-    () => (getScrollElementProp ?? (() => scrollParentRef.current))(),
-    [getScrollElementProp, scrollParentRef],
-  );
-
   /** Comments with an open player: their row stays mounted even when scrolled far away. */
   const [openMediaIds, setOpenMediaIds] = useState<ReadonlySet<string>>(() => new Set());
   const setCommentMediaOpen = useCallback((commentId: string, open: boolean) => {
@@ -102,12 +96,19 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
     [pinnedIndexes],
   );
 
-  const virtualizer = useVirtualizer({
+  const virtualizer = useThreadVirtualizer({
     count: comments.length,
-    getScrollElement: resolveScrollElement,
-    estimateSize: (index) => estimateCommentRowHeight(comments[index]),
+    documentScroll,
+    scrollParentRef,
     scrollMargin,
-    overscan: 3,
+    estimateSize: (index) => {
+      const c = comments[index];
+      const tagUpper = c?.publicTag.toUpperCase() ?? "";
+      return estimateCommentRowHeight(
+        c,
+        taggedByIndex.has(tagUpper) || repliesByTarget.has(tagUpper),
+      );
+    },
     rangeExtractor,
     getItemKey: (index) => {
       const c = comments[index];
@@ -116,12 +117,10 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
     },
   });
 
-  useKeepScrollOnVirtualizerMount(resolveScrollElement);
-
-  // `scrollMargin` lets the virtualizer compute scroll relative to the thread start with content
-  // above it (composer, toolbar); it must not become empty space inside the rendered thread.
-  const renderOffset = Math.max(0, scrollMargin);
-  const totalSize = Math.max(0, virtualizer.getTotalSize() - renderOffset);
+  // Row starts include `scrollMargin` (what sits above the thread in the scroll: vox, composer,
+  // toolbar); it must not become empty space inside the rendered thread. The total size excludes it.
+  const renderOffset = Math.max(0, scrollMargin ?? 0);
+  const totalSize = virtualizer.getTotalSize();
 
   useImperativeHandle(
     ref,
@@ -142,15 +141,7 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
         });
       },
       scrollScrollAreaToTop: () => {
-        const scrollEl = resolveScrollElement();
-        if (
-          scrollEl &&
-          (scrollEl === document.documentElement ||
-            scrollEl === document.body ||
-            scrollEl === document.scrollingElement)
-        ) {
-          return;
-        }
+        if (documentScroll) return;
         virtualizer.scrollToOffset(0, { behavior: "auto" });
       },
       scrollToOldestComment: () => {
@@ -167,7 +158,7 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
         });
       },
     }),
-    [comments, virtualizer, resolveScrollElement],
+    [comments, virtualizer, documentScroll],
   );
   return (
     <CommentMediaActivityProvider value={mediaActivity}>

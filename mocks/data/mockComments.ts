@@ -144,6 +144,34 @@ const seededTag = (seed: string): string => {
   }
   return s;
 };
+export const MSW_DEMO_LONG_THREAD_KEY = "voxer:msw-demo-long-thread";
+
+type LongThread = { size: number; videoUrl?: string };
+
+/** e2e: a JSON `{ size, videoUrl? }` under this key seeds that many comments, one of them with the video. */
+const readLongThread = (): LongThread | null => {
+  try {
+    const raw = window.localStorage.getItem(MSW_DEMO_LONG_THREAD_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Partial<LongThread>) : null;
+    return parsed && typeof parsed.size === "number" ? { ...parsed, size: parsed.size } : null;
+  } catch {
+    return null;
+  }
+};
+
+const LONG_THREAD_VIDEO_INDEX = 2;
+
+const LONG_THREAD_WRAPPING_LINE =
+  "Una línea larga que en pantalla ocupa varias, para que la fila mida distinto de lo estimado y haya algo que corregir al medirla.";
+
+/** Bodies of uneven height; every fourth one wraps, so its row does not match the virtualizer's estimate. */
+const longThreadBody = (i: number): string =>
+  [
+    `Comentario demo #${i + 1}`,
+    ...Array.from({ length: i % 6 }, (_, n) => `Línea ${n + 2}`),
+    ...(i % 4 === 3 ? [LONG_THREAD_WRAPPING_LINE] : []),
+  ].join("\n");
+
 export const seedMockComments = (voxId: string, repliesHint: number) => {
   if (store.has(voxId)) return;
   // A vox listed without replies opens with an empty thread, the only way to demo the first comment.
@@ -152,16 +180,17 @@ export const seedMockComments = (voxId: string, repliesHint: number) => {
     return;
   }
   const list = sampleComments(voxId);
-  const extra = Math.min(12, Math.max(0, repliesHint - list.length));
+  const longThread = readLongThread();
+  const extra = longThread?.size ?? Math.min(12, Math.max(0, repliesHint - list.length));
   const t0 = Date.now();
   for (let i = 0; i < extra; i++) {
     list.push({
       id: `${voxId}-cx-${i}`,
       publicTag: seededTag(`${voxId}-cx-${i}`),
-      body: `Comentario demo #${i + 1}`,
+      body: longThread ? longThreadBody(i) : `Comentario demo #${i + 1}`,
       displayName: "Anónimo",
       imageUrl: null,
-      videoUrl: null,
+      videoUrl: (i === LONG_THREAD_VIDEO_INDEX && longThread?.videoUrl) || null,
       videoPosterUrl: null,
       avatarVariant: "YELLOW",
       isOp: false,

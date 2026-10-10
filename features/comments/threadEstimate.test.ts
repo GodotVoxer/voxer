@@ -25,6 +25,16 @@ describe("estimateCommentRowHeight", () => {
   });
 
   it("returns a sensible minimum without a comment", () => {
-    expect(estimateCommentRowHeight(undefined)).toBeGreaterThanOrEqual(120);
+    expect(estimateCommentRowHeight(undefined)).toBeGreaterThanOrEqual(70);
+  });
+
+  it("matches a plain text row: header plus one line of body each", () => {
+    expect(estimateCommentRowHeight(base({ body: "hola" }))).toBe(70);
+    expect(estimateCommentRowHeight(base({ body: "uno\ndos\ntres" }))).toBe(110);
+  });
+
+  it("adds the quotes bar and the replies button only to quoted comments", () => {
+    const plain = estimateCommentRowHeight(base({}));
+    expect(estimateCommentRowHeight(base({}), true)).toBe(plain + 60);
   });
 });

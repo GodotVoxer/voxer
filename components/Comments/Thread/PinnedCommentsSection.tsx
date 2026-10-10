@@ -1,13 +1,12 @@
 "use client";
-import { useCallback, useState, type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { ChevronDown, Pin } from "lucide-react";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CommentRow } from "@/components/Comments/Comment/CommentRow";
 import type { CommentPublic } from "@/lib/vox/types";
 import type { CommentTagBackref } from "@/features/comments/backrefs";
 import { estimateCommentRowHeight } from "@/features/comments/threadEstimate";
-import { useKeepScrollOnVirtualizerMount } from "@/hooks/comments/useKeepScrollOnVirtualizerMount";
+import { useThreadVirtualizer } from "@/hooks/comments/useThreadVirtualizer";
 import { cn } from "@/lib/utils";
 import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 
@@ -28,10 +27,10 @@ type Props = {
   /** Already sorted, latest pin first. */
   pinned: CommentPublic[];
   scrollParentRef: RefObject<HTMLDivElement | null>;
-  /** Defaults to `scrollParentRef.current`; on mobile the document scrolls. */
-  getScrollElement?: () => HTMLElement | null;
-  /** Offset (px) between the start of the scroll element and the start of this block. */
-  scrollMargin?: number;
+  /** The page scrolls (mobile) instead of `scrollParentRef`. */
+  documentScroll: boolean;
+  /** Offset (px) between the start of the scroll and the start of this block; `null` until measured. */
+  scrollMargin: number | null;
   taggedByIndex: Map<string, CommentTagBackref[]>;
   repliesByTarget: Map<string, CommentPublic[]>;
   resolveComment: (publicTagUpper: string) => CommentPublic | undefined;
@@ -57,8 +56,8 @@ export const PinnedCommentsSection = ({
   voxId,
   pinned,
   scrollParentRef,
-  getScrollElement: getScrollElementProp,
-  scrollMargin = 0,
+  documentScroll,
+  scrollMargin,
   taggedByIndex,
   repliesByTarget,
   resolveComment,
@@ -79,25 +78,22 @@ export const PinnedCommentsSection = ({
 
   const [collapsed, setCollapsed] = useState(() => readCollapsed(voxId));
 
-  const resolveScrollElement = useCallback(
-    () => (getScrollElementProp ?? (() => scrollParentRef.current))(),
-    [getScrollElementProp, scrollParentRef],
-  );
-
-  // TanStack Virtual returns mutable functions by design; this component opts out of the React
-  // Compiler with `use no memo`, so the incompatibility warning does not apply.
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const virtualizer = useVirtualizer({
+  const virtualizer = useThreadVirtualizer({
     count: pinned.length,
-    getScrollElement: resolveScrollElement,
-    estimateSize: (index) => estimateCommentRowHeight(pinned[index]),
+    documentScroll,
+    scrollParentRef,
     scrollMargin,
+    estimateSize: (index) => {
+      const c = pinned[index];
+      const tagUpper = c?.publicTag.toUpperCase() ?? "";
+      return estimateCommentRowHeight(
+        c,
+        taggedByIndex.has(tagUpper) || repliesByTarget.has(tagUpper),
+      );
+    },
     gap: PINNED_ROW_GAP_PX,
-    overscan: 3,
     getItemKey: (index) => `pinned:${pinned[index]?.id ?? index}`,
   });
-
-  useKeepScrollOnVirtualizerMount(resolveScrollElement);
 
   if (pinned.length === 0) return null;
 
@@ -139,7 +135,7 @@ export const PinnedCommentsSection = ({
                   data-index={v.index}
                   ref={virtualizer.measureElement}
                   className="absolute top-0 left-0 w-full"
-                  style={{ transform: `translateY(${v.start - scrollMargin}px)` }}
+                  style={{ transform: `translateY(${v.start - (scrollMargin ?? 0)}px)` }}
                 >
                   <CommentRow
                     comment={c}

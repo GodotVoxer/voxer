@@ -1,6 +1,6 @@
 "use client";
 import type { RefObject } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getDocumentScrollElement } from "@/features/device/documentScroll";
@@ -105,33 +105,35 @@ export const VoxDetailCommentsPanel = ({
   const composerAnchorRef = useRef<HTMLDivElement>(null);
   const threadStartRef = useRef<HTMLDivElement>(null);
   const pinnedSectionRef = useRef<HTMLDivElement>(null);
-  const [threadScrollMargin, setThreadScrollMargin] = useState(0);
-  const [pinnedScrollMargin, setPinnedScrollMargin] = useState(0);
+  const [threadScrollMargin, setThreadScrollMargin] = useState<number | null>(null);
+  const [pinnedScrollMargin, setPinnedScrollMargin] = useState<number | null>(null);
+  const pinnedLaidOut = pinnedScrollMargin !== null;
   const floatingComposer = useFloatingCommentComposer({
     enabled: commentsUseInnerScroll,
     slotRef: composerAnchorRef,
     scrollRootRef: scrollParentRef,
   });
 
-  useEffect(() => {
+  // A layout effect: the lists mount no rows until they know where they start, and that has to be
+  // settled before the first paint.
+  useLayoutEffect(() => {
+    const offsetInScroll = (el: HTMLElement) =>
+      Math.round(
+        commentsUseInnerScroll ? el.offsetTop : el.getBoundingClientRect().top + window.scrollY,
+      );
+
     const compute = () => {
-      // Pinned comments are virtualized on the thread's scroll and need their own offset; the thread's
-      // would shift them by the block's own height.
       const pinnedEl = pinnedSectionRef.current;
-      if (pinnedEl) {
-        setPinnedScrollMargin(
-          commentsUseInnerScroll
-            ? pinnedEl.offsetTop
-            : pinnedEl.getBoundingClientRect().top + (getDocumentScrollElement()?.scrollTop ?? 0),
-        );
-      }
-      const el = threadStartRef.current;
-      if (!el) return;
-      if (commentsUseInnerScroll) {
-        setThreadScrollMargin(el.offsetTop);
+      const threadEl = threadStartRef.current;
+      if (!pinnedEl || !threadEl) {
+        setPinnedScrollMargin(null);
+        setThreadScrollMargin(null);
         return;
       }
-      setThreadScrollMargin(0);
+      setPinnedScrollMargin(offsetInScroll(pinnedEl));
+      // The pinned block sits above the thread: the thread start is only known once its rows are laid
+      // out, one render after the block got its own start.
+      if (pinnedLaidOut) setThreadScrollMargin(offsetInScroll(threadEl));
     };
 
     compute();
@@ -158,6 +160,7 @@ export const VoxDetailCommentsPanel = ({
     commentsError,
     comments.length,
     pinnedComments.length,
+    pinnedLaidOut,
     scrollParentRef,
   ]);
 
@@ -233,24 +236,7 @@ export const VoxDetailCommentsPanel = ({
     commentsUseInnerScroll,
   ]);
 
-  const scrollToOldestComment = () => {
-    if (commentsUseInnerScroll) {
-      threadRef.current?.scrollToOldestComment();
-      return;
-    }
-
-    const runWin = () => {
-      const docEl = getDocumentScrollElement();
-      if (!docEl) return;
-      const max = Math.max(0, docEl.scrollHeight - window.innerHeight);
-      window.scrollTo({ top: max, behavior: "smooth" });
-    };
-    runWin();
-    requestAnimationFrame(() => {
-      runWin();
-      requestAnimationFrame(runWin);
-    });
-  };
+  const scrollToOldestComment = () => threadRef.current?.scrollToOldestComment();
 
   const scrollToComposerTop = () => {
     if (commentsUseInnerScroll) {
@@ -349,7 +335,7 @@ export const VoxDetailCommentsPanel = ({
                   voxId={voxId}
                   pinned={pinnedComments}
                   scrollParentRef={scrollParentRef}
-                  getScrollElement={commentsUseInnerScroll ? undefined : getDocumentScrollElement}
+                  documentScroll={!commentsUseInnerScroll}
                   scrollMargin={pinnedScrollMargin}
                   taggedByIndex={taggedByIndex}
                   repliesByTarget={repliesByTarget}
@@ -380,7 +366,7 @@ export const VoxDetailCommentsPanel = ({
                   onTagClick={onTagClick}
                   onOpenReplies={onOpenReplies}
                   scrollParentRef={scrollParentRef}
-                  getScrollElement={commentsUseInnerScroll ? undefined : getDocumentScrollElement}
+                  documentScroll={!commentsUseInnerScroll}
                   scrollMargin={threadScrollMargin}
                   onReportComment={onReportComment}
                   showReportOnComments={showReportOnComments}

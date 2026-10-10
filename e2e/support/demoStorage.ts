@@ -1,6 +1,7 @@
 import type { BrowserContext, Page } from "@playwright/test";
 import { CATEGORY_FILTER_STORAGE_KEY } from "../../features/vox/categoryFilterStore";
 import { SETTINGS_STORAGE_KEY } from "../../features/settings/store";
+import { MSW_DEMO_LONG_THREAD_KEY } from "../../mocks/data/mockComments";
 import {
   SEASONAL_THEME_STORAGE_KEY,
   serializeSeasonalThemeChoice,
@@ -28,6 +29,8 @@ type DemoSeed = {
   nsfwPromptAnswered?: boolean;
   /** Persisted device settings (the `features/settings` store state). */
   settings?: Record<string, unknown>;
+  /** Every vox with comments opens with this many more, one of them carrying the video. */
+  longThread?: { size: number; videoUrl?: string };
 };
 
 const persisted = (state: Record<string, unknown>) => JSON.stringify({ state, version: 0 });
@@ -39,6 +42,7 @@ const demoStorageEntries = ({
   rulesAccepted,
   nsfwPromptAnswered = true,
   settings,
+  longThread,
 }: DemoSeed = {}): Record<string, string> => ({
   ...(role ? { "voxer:msw-demo-role": role } : {}),
   ...(theme ? { [THEME_STORAGE_KEY]: serializeThemePreference(theme) } : {}),
@@ -50,6 +54,7 @@ const demoStorageEntries = ({
     ? { [CATEGORY_FILTER_STORAGE_KEY]: persisted({ nsfwPromptAnswered: true }) }
     : {}),
   ...(settings ? { [SETTINGS_STORAGE_KEY]: persisted(settings) } : {}),
+  ...(longThread ? { [MSW_DEMO_LONG_THREAD_KEY]: JSON.stringify(longThread) } : {}),
 });
 
 /** Seeds localStorage before any page script runs. */
