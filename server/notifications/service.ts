@@ -57,15 +57,37 @@ export const listNotificationsForUser = async (
   }));
 };
 
+/**
+ * With `seenThrough` only what the reader has had on screen is marked: notifications whose comment is
+ * newer stay unread (`null`: no comment on screen), except those whose comment is gone and can no
+ * longer be seen. Without it every notification of the vox is marked.
+ */
 export const markNotificationsReadForUserVox = async (
   userId: string,
   voxId: string,
-): Promise<number> => {
+  seenThrough?: Date | null,
+): Promise<{ marked: number; remaining: number }> => {
+  const unread = { userId, voxId, readAt: null };
+  if (seenThrough === undefined) {
+    const r = await prisma.notification.updateMany({
+      where: unread,
+      data: { readAt: new Date() },
+    });
+    return { marked: r.count, remaining: 0 };
+  }
   const r = await prisma.notification.updateMany({
-    where: { userId, voxId, readAt: null },
+    where: {
+      ...unread,
+      OR: [
+        { relatedCommentId: null },
+        { relatedComment: { deletedAt: { not: null } } },
+        ...(seenThrough ? [{ relatedComment: { createdAt: { lte: seenThrough } } }] : []),
+      ],
+    },
     data: { readAt: new Date() },
   });
-  return r.count;
+  const remaining = await prisma.notification.count({ where: unread });
+  return { marked: r.count, remaining };
 };
 export const deleteAllNotificationsForUser = async (userId: string): Promise<void> => {
   await prisma.notification.deleteMany({ where: { userId } });

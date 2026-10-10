@@ -34,6 +34,10 @@ export const POST = async (req: Request) => {
     if (e instanceof ZodError) return jsonError(zodToMessage(e), 400);
     return jsonError(internalErrorMessageEs(), 500);
   }
-  const marked = await markNotificationsReadForUserVox(userId, parsed.voxId);
-  return NextResponse.json({ ok: true, marked });
+  const { marked, remaining } = await markNotificationsReadForUserVox(
+    userId,
+    parsed.voxId,
+    typeof parsed.seenThrough === "string" ? new Date(parsed.seenThrough) : parsed.seenThrough,
+  );
+  return NextResponse.json({ ok: true, marked, remaining });
 };

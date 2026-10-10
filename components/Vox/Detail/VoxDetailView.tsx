@@ -10,6 +10,7 @@ import { useCommentThreadPopups } from "@/hooks/comments/useCommentThreadPopups"
 import { useMarkVoxNotificationsRead } from "@/hooks/notifications/useMarkVoxNotificationsRead";
 import { useMarkVoxModerationNotificationsRead } from "@/hooks/notifications/useMarkVoxModerationNotificationsRead";
 import { useClearNativeVoxNotifications } from "@/hooks/notifications/useClearNativeVoxNotifications";
+import { newestSeenCommentAt } from "@/features/notifications/markVoxRead";
 import { useVoxCommentsRealtime } from "@/hooks/vox/useVoxCommentsRealtime";
 import { useVoxCommentHashDeepLink } from "@/hooks/vox/useVoxCommentHashDeepLink";
 import { useVoxCommentHighlightDismiss } from "@/hooks/vox/useVoxCommentHighlightDismiss";
@@ -59,9 +60,13 @@ export const VoxDetailView = ({
     retryAfterLoadError,
   } = useVoxDetailInitialLoad(id, initialVox);
 
-  useMarkVoxNotificationsRead(id);
+  const seenThrough = useMemo(() => newestSeenCommentAt(comments), [comments]);
+  const notificationsCaughtUp = useMarkVoxNotificationsRead(id, {
+    ready: !commentsLoading && !commentsError,
+    seenThrough,
+  });
   useMarkVoxModerationNotificationsRead(id, markModerationNotificationsRead);
-  useClearNativeVoxNotifications(id);
+  useClearNativeVoxNotifications(id, notificationsCaughtUp);
 
   const mod = useVoxDetailModeration({
     voxId: id,

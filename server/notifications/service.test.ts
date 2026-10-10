@@ -5,21 +5,63 @@ import { listNotificationsForUser, markNotificationsReadForUserVox } from "./ser
 
 vi.mock("@/server/db/prisma", () => ({
   prisma: {
-    notification: { updateMany: vi.fn(), findMany: vi.fn() },
+    notification: { updateMany: vi.fn(), findMany: vi.fn(), count: vi.fn() },
   },
 }));
 
 describe("markNotificationsReadForUserVox", () => {
   beforeEach(() => {
     vi.mocked(prisma.notification.updateMany).mockReset();
+    vi.mocked(prisma.notification.count).mockReset();
   });
 
-  it("marks only that user's unread notifications of the vox", async () => {
+  it("marks every unread notification of the vox when no comment is given", async () => {
     vi.mocked(prisma.notification.updateMany).mockResolvedValue({ count: 2 });
-    const n = await markNotificationsReadForUserVox("u1", "vox-a");
-    expect(n).toBe(2);
+    const result = await markNotificationsReadForUserVox("u1", "vox-a");
+    expect(result).toEqual({ marked: 2, remaining: 0 });
     expect(prisma.notification.updateMany).toHaveBeenCalledWith({
       where: { userId: "u1", voxId: "vox-a", readAt: null },
+      data: { readAt: expect.any(Date) },
+    });
+    expect(prisma.notification.count).not.toHaveBeenCalled();
+  });
+
+  it("leaves unread the notifications of comments newer than the last one on screen", async () => {
+    vi.mocked(prisma.notification.updateMany).mockResolvedValue({ count: 1 });
+    vi.mocked(prisma.notification.count).mockResolvedValue(2);
+    const seenThrough = new Date("2026-05-01T12:00:00.000Z");
+    const result = await markNotificationsReadForUserVox("u1", "vox-a", seenThrough);
+    expect(result).toEqual({ marked: 1, remaining: 2 });
+    expect(prisma.notification.updateMany).toHaveBeenCalledWith({
+      where: {
+        userId: "u1",
+        voxId: "vox-a",
+        readAt: null,
+        OR: [
+          { relatedCommentId: null },
+          { relatedComment: { deletedAt: { not: null } } },
+          { relatedComment: { createdAt: { lte: seenThrough } } },
+        ],
+      },
+      data: { readAt: expect.any(Date) },
+    });
+    expect(prisma.notification.count).toHaveBeenCalledWith({
+      where: { userId: "u1", voxId: "vox-a", readAt: null },
+    });
+  });
+
+  it("marks only notifications without a visible comment when nothing is on screen", async () => {
+    vi.mocked(prisma.notification.updateMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.notification.count).mockResolvedValue(1);
+    const result = await markNotificationsReadForUserVox("u1", "vox-a", null);
+    expect(result).toEqual({ marked: 0, remaining: 1 });
+    expect(prisma.notification.updateMany).toHaveBeenCalledWith({
+      where: {
+        userId: "u1",
+        voxId: "vox-a",
+        readAt: null,
+        OR: [{ relatedCommentId: null }, { relatedComment: { deletedAt: { not: null } } }],
+      },
       data: { readAt: expect.any(Date) },
     });
   });

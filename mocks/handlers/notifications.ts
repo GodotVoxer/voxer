@@ -21,7 +21,7 @@ export const notificationsHandlers = [
     });
   }),
   http.post("/api/notifications/mark-read", () => {
-    return HttpResponse.json({ ok: true });
+    return HttpResponse.json({ ok: true, marked: 0, remaining: 0 });
   }),
   http.delete("/api/notifications", () => {
     return HttpResponse.json({ ok: true });

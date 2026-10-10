@@ -39,6 +39,12 @@ Los comentarios del mismo vox comparten una sola fila de notificación por canal
 
 Cada fila de la campana muestra debajo del mensaje un fragmento del comentario, y la de denuncias el del comentario denunciado. El fragmento no se guarda en la notificación: se lee del comentario en cada listado, así un comentario borrado deja de mostrarse y uno editado se ve como quedó.
 
+### Lectura con el vox abierto
+
+Con un vox abierto, sus notificaciones se marcan como leídas solas, pero solo las de comentarios que ya están en el hilo. La página manda a `POST /api/notifications/mark-read` la fecha del comentario más nuevo que tiene en pantalla (`seenThrough`) y el servidor marca hasta ahí; responde cuántas del vox quedaron sin leer (`remaining`). Así, en modo diferido, la notificación de un comentario que todavía espera detrás del «+N» sigue sin leer hasta que se lo revela, y lo mismo pasa mientras los comentarios cargan o la pestaña está oculta. Las notificaciones de comentarios borrados se marcan igual, porque ya no hay nada para ver. Sin `seenThrough` (la campana, al tocar una fila) se marcan todas las del vox.
+
+La lógica está en `features/notifications/markVoxRead.ts` y `hooks/notifications/useMarkVoxNotificationsRead.ts`.
+
 ## Escritorio
 
 - El servidor hace POST al endpoint que registró el navegador, así que `server/push/webPushSubscription.ts` solo acepta hosts de servicios de push conocidos (Google, Mozilla, Apple, Microsoft): cualquier otro host convertiría cada comentario en un pedido del servidor a una URL arbitraria.
@@ -56,7 +62,7 @@ La app guarda su token y la página lo registra con `POST /api/push/devices` (ve
 
 Expandida, la fila muestra el texto completo (`BigTextStyle`) y la miniatura del vox queda chica a la derecha. Las versiones anteriores a la que lee `expandedBody` muestran la línea de `body`.
 
-Cuando un vox se abre dentro de la app, la página le pide que borre las notificaciones de ese vox (`clearVoxNotifications`, desde `hooks/notifications/useClearNativeVoxNotifications.ts`), junto con el resumen del grupo si queda vacío. Lo vuelve a pedir si llega un push con el vox abierto o al volver a la app. Cada fila guarda el id del vox; las que mostraron versiones anteriores a la 1.1.1 se reconocen por su `collapseKey`, salvo las de denuncias, que se van recién cuando el contador llega a cero.
+Cuando un vox se abre dentro de la app, la página le pide que borre las notificaciones de ese vox (`clearVoxNotifications`, desde `hooks/notifications/useClearNativeVoxNotifications.ts`), junto con el resumen del grupo si queda vacío. Lo pide recién cuando no queda nada del vox sin ver (ver [Lectura con el vox abierto](#lectura-con-el-vox-abierto)), y lo vuelve a pedir si llega un push con el vox abierto o al volver a la app. Cada fila guarda el id del vox; las que mostraron versiones anteriores a la 1.1.1 se reconocen por su `collapseKey`, salvo las de denuncias, que se van recién cuando el contador llega a cero.
 
 ## Configuración
 
