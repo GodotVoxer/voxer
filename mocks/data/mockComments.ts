@@ -146,6 +146,11 @@ const seededTag = (seed: string): string => {
 };
 export const seedMockComments = (voxId: string, repliesHint: number) => {
   if (store.has(voxId)) return;
+  // A vox listed without replies opens with an empty thread, the only way to demo the first comment.
+  if (repliesHint === 0) {
+    store.set(voxId, []);
+    return;
+  }
   const list = sampleComments(voxId);
   const extra = Math.min(12, Math.max(0, repliesHint - list.length));
   const t0 = Date.now();

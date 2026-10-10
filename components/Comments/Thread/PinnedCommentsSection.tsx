@@ -7,6 +7,7 @@ import { CommentRow } from "@/components/Comments/Comment/CommentRow";
 import type { CommentPublic } from "@/lib/vox/types";
 import type { CommentTagBackref } from "@/features/comments/backrefs";
 import { estimateCommentRowHeight } from "@/features/comments/threadEstimate";
+import { useKeepScrollOnVirtualizerMount } from "@/hooks/comments/useKeepScrollOnVirtualizerMount";
 import { cn } from "@/lib/utils";
 import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 
@@ -95,6 +96,8 @@ export const PinnedCommentsSection = ({
     overscan: 3,
     getItemKey: (index) => `pinned:${pinned[index]?.id ?? index}`,
   });
+
+  useKeepScrollOnVirtualizerMount(resolveScrollElement);
 
   if (pinned.length === 0) return null;
 

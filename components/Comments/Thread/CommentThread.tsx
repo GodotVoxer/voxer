@@ -14,6 +14,7 @@ import { estimateCommentRowHeight } from "@/features/comments/threadEstimate";
 import { rangeWithPinnedIndexes } from "@/features/comments/threadRange";
 import { CommentMediaActivityProvider } from "@/components/Comments/Thread/CommentMediaActivity";
 import { CommentRow } from "@/components/Comments/Comment/CommentRow";
+import { useKeepScrollOnVirtualizerMount } from "@/hooks/comments/useKeepScrollOnVirtualizerMount";
 import type { CommentThreadHandle } from "@/features/comments/threadHandle";
 import type { ReplyTagHandler } from "@/components/Comments/Comment/CommentTagButton";
 type Props = {
@@ -114,6 +115,8 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
       return `${c.id}:${c.body.length}:${c.imageUrl ?? ""}:${c.videoUrl ?? ""}:${c.videoPosterUrl ?? ""}`;
     },
   });
+
+  useKeepScrollOnVirtualizerMount(resolveScrollElement);
 
   // `scrollMargin` lets the virtualizer compute scroll relative to the thread start with content
   // above it (composer, toolbar); it must not become empty space inside the rendered thread.
