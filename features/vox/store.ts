@@ -68,7 +68,7 @@ interface VoxState {
   removeVoxFromDefaultFeed: (voxId: string) => void;
   removeVoxIdsFromDefaultFeed: (voxIds: string[]) => void;
   patchVoxInDefaultFeed: (voxId: string, patch: Partial<VoxListItem>) => void;
-  applyHomeFeedActivity: (voxId: string, replies?: number) => void;
+  applyHomeFeedActivity: (voxId: string, replies?: number, bump?: boolean) => void;
   applyVoxPinInDefaultFeed: (voxId: string, pinnedAt: string | null) => void;
   prependNewVoxFromServer: () => Promise<void>;
 }
@@ -379,12 +379,12 @@ export const useVoxStore = create<VoxState>((set, get) => ({
     });
   },
 
-  applyHomeFeedActivity: (voxId: string, replies?: number) => {
+  applyHomeFeedActivity: (voxId: string, replies?: number, bump = true) => {
     const item = get().feeds.default.items.find((v) => v.id === voxId);
     if (!item) return;
     const nextReplies = typeof replies === "number" ? replies : item.replies + 1;
     get().patchVoxInDefaultFeed(voxId, { replies: nextReplies });
-    get().registerActivityFlash(voxId);
+    if (bump) get().registerActivityFlash(voxId);
   },
 
   applyVoxPinInDefaultFeed: (voxId: string, pinnedAt: string | null) => {

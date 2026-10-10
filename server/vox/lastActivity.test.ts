@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "@prisma/client";
 
+import { HIDE_COMMAND_LINE_PATTERN } from "@/lib/comments/hideCommand";
 import { recomputeVoxLastActivity } from "./lastActivity";
 
 const makeDb = () => {
@@ -21,7 +22,15 @@ describe("recomputeVoxLastActivity", () => {
     expect(executeRaw).toHaveBeenCalledTimes(1);
     const [strings, ...values] = executeRaw.mock.calls[0] as [TemplateStringsArray, ...unknown[]];
     expect(strings.join("?")).toContain('c."deletedAt" IS NULL');
-    expect(values).toHaveLength(1);
-    expect((values[0] as { values: unknown[] }).values).toEqual(["v1", "v2"]);
+    expect(values).toHaveLength(2);
+    expect((values[1] as { values: unknown[] }).values).toEqual(["v1", "v2"]);
+  });
+
+  it("leaves >hide comments out with the pattern the comment code uses", async () => {
+    const { db, executeRaw } = makeDb();
+    await recomputeVoxLastActivity(db, ["v1"]);
+    const [strings, ...values] = executeRaw.mock.calls[0] as [TemplateStringsArray, ...unknown[]];
+    expect(strings[0]).toMatch(/c\."body" !~\* $/);
+    expect(values[0]).toBe(HIDE_COMMAND_LINE_PATTERN);
   });
 });

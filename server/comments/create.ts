@@ -105,6 +105,7 @@ export const createCommentOnVox = async (
   // A YouTube embed is never an uploaded animation, whatever the client claims.
   const animatedImage = Boolean(parsed.animatedImage && videoUrl && !isYoutubeEmbedUrl(videoUrl));
   const replyTagsDistinct = extractDistinctReplyTagsInOrder(text);
+  const hidesVox = commentBodyHasHideCommand(text);
   try {
     const now = new Date();
     const clientIpHash = hashClientIpFromRawHeaderValue(ctx.clientIpRaw);
@@ -256,15 +257,16 @@ export const createCommentOnVox = async (
           threadBadgeHue: threadBadgeHueSave,
         },
       });
-      await tx.vox.update({
-        where: { id: voxId },
-        data: { lastActivityAt: now },
-      });
-      if (commentBodyHasHideCommand(text)) {
+      if (hidesVox) {
         await tx.voxHide.upsert({
           where: { userId_voxId: { userId: ctx.userId, voxId } },
           create: { userId: ctx.userId, voxId },
           update: {},
+        });
+      } else {
+        await tx.vox.update({
+          where: { id: voxId },
+          data: { lastActivityAt: now },
         });
       }
       await tx.user.update({
@@ -326,7 +328,7 @@ export const createCommentOnVox = async (
     after(async () => {
       const replies = await countActiveCommentsForVox(voxId);
       await Promise.allSettled([
-        broadcastVoxActivity(voxId, replies),
+        broadcastVoxActivity(voxId, replies, { bump: !hidesVox }),
         emitToVoxRoom(voxId, "comment:created", commentForVoxRoom),
         emitToUserRoom(ctx.userId, "comment:created", publicPayload),
         ...notificationRows.map((row) =>

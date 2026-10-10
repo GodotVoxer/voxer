@@ -10,7 +10,11 @@ import { postComment, uploadMedia } from "@/features/vox/api";
 import { useVoxStore } from "@/features/vox/store";
 import type { CommentPublic } from "@/lib/vox/types";
 import { replyTagsErrorMessageEs, validateCommentReplyTagCountOnly } from "@/lib/comments/replies";
-import { appendHideCommandToBody, HIDE_COMMAND } from "@/lib/comments/hideCommand";
+import {
+  appendHideCommandToBody,
+  commentBodyHasHideCommand,
+  HIDE_COMMAND,
+} from "@/lib/comments/hideCommand";
 import { COMMENT_BODY_MAX } from "@/lib/limits";
 import {
   parseBannedFromAxios,
@@ -175,7 +179,9 @@ export const useCommentComposer = ({ voxId, onPosted, pendingPollVote = null }: 
         ...(pendingPollVote ? { pollDisclosureOptionId: pendingPollVote.optionId } : {}),
         ...(authUser && isStaffRole(authUser.role) ? { showStaffIdentity } : {}),
       });
-      useVoxStore.getState().applyHomeFeedActivity(voxId);
+      useVoxStore
+        .getState()
+        .applyHomeFeedActivity(voxId, undefined, !commentBodyHasHideCommand(posted.body));
       setBody("");
       setLinkUrl("");
       setShowStaffIdentity(false);

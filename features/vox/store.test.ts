@@ -155,6 +155,23 @@ describe("useVoxStore pagination", () => {
     expect(useVoxStore.getState().feeds.hidden.items.length).toBe(0);
   });
 
+  it("applyHomeFeedActivity updates the count and flashes only when the vox was bumped", async () => {
+    vi.mocked(getVoxListPage).mockResolvedValueOnce({
+      items: [listItem("a"), listItem("b")],
+      nextCursor: null,
+      hasMore: false,
+    });
+    await useVoxStore.getState().fetchInitialPage("default");
+
+    useVoxStore.getState().applyHomeFeedActivity("a", 4);
+    useVoxStore.getState().applyHomeFeedActivity("b", 7, false);
+
+    const { feeds, isActivityFlashing } = useVoxStore.getState();
+    expect(feeds.default.items.map((i) => i.replies)).toEqual([4, 7]);
+    expect(isActivityFlashing("a")).toBe(true);
+    expect(isActivityFlashing("b")).toBe(false);
+  });
+
   it("setVoxFavoritedInFeeds updates favorited in every view", async () => {
     vi.mocked(getVoxListPage).mockResolvedValueOnce({
       items: [listItem("a"), listItem("b")],

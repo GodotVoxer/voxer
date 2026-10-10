@@ -61,11 +61,11 @@ export const useHomeFeedPush = ({ enabled, categoryCode }: Args) => {
           const ids = payload?.voxIds;
           if (Array.isArray(ids) && ids.length > 0) removeVoxIdsFromDefaultFeed(ids);
         };
-        const onActivity = (payload: { voxId?: string; replies?: number }) => {
+        const onActivity = (payload: { voxId?: string; replies?: number; bump?: boolean }) => {
           const voxId = payload?.voxId;
           const replies = payload?.replies;
           if (!voxId || typeof replies !== "number") return;
-          applyHomeFeedActivity(voxId, replies);
+          applyHomeFeedActivity(voxId, replies, payload.bump !== false);
         };
         const onUpdated = (payload: {
           voxId?: string;

@@ -81,6 +81,17 @@ describe("broadcast feed home", () => {
     ]);
   });
 
+  it("broadcastVoxActivity marks an update that does not bump the vox", async () => {
+    await broadcastVoxActivity("v1", 3, { bump: false });
+    expect(bodies()).toEqual([
+      {
+        room: FEED_HOME_ROOM,
+        event: "vox:activity",
+        data: { voxId: "v1", replies: 3, bump: false },
+      },
+    ]);
+  });
+
   it("broadcastVoxCreated goes only to feed:home", async () => {
     const item = {
       id: "n1",

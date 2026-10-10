@@ -123,8 +123,13 @@ export const broadcastCommentUpdated = async (
   await emitToVoxRoom(voxId, "comment:updated", comment);
 };
 
-export const broadcastVoxActivity = async (voxId: string, replies: number): Promise<void> => {
-  await emitToFeedHome("vox:activity", { voxId, replies });
+/** `bump: false` updates the reply count on the grid without flagging the vox as active. */
+export const broadcastVoxActivity = async (
+  voxId: string,
+  replies: number,
+  { bump = true }: { bump?: boolean } = {},
+): Promise<void> => {
+  await emitToFeedHome("vox:activity", { voxId, replies, ...(bump ? {} : { bump: false }) });
 };
 
 export const broadcastVoxCreated = async (item: VoxListApiItem): Promise<void> => {
