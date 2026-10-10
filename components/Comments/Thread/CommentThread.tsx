@@ -141,7 +141,6 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
         });
       },
       scrollScrollAreaToTop: () => {
-        if (documentScroll) return;
         virtualizer.scrollToOffset(0, { behavior: "auto" });
       },
       scrollToOldestComment: () => {
@@ -158,7 +157,7 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
         });
       },
     }),
-    [comments, virtualizer, documentScroll],
+    [comments, virtualizer],
   );
   return (
     <CommentMediaActivityProvider value={mediaActivity}>

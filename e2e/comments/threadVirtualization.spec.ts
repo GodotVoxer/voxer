@@ -330,3 +330,29 @@ test("the button to the oldest comment reaches the end of the thread", async ({
   await page.getByRole("button", { name: "Ir al primer comentario del hilo" }).click();
   await expect(page.locator(`[id="${oldest}"]`)).toBeInViewport({ ratio: 0.9 });
 });
+
+test("the button back to the composer reaches it from deep in the thread", async ({
+  page,
+}, testInfo) => {
+  mobileOnly(testInfo.project.name);
+  await openThread(page);
+  // A far jump: every row between here and the composer mounts and is measured on the way back.
+  await page.evaluate(() =>
+    window.scrollTo({ top: document.documentElement.scrollHeight * 0.8, behavior: "instant" }),
+  );
+  await settle(page);
+
+  await page.getByRole("button", { name: "Volver al cuadro de comentario" }).click();
+  const composer = page.getByPlaceholder(/Escribí un comentario/);
+  await expect(composer).toBeInViewport({ ratio: 1 });
+  const headerBottom = await page.evaluate(
+    () => document.querySelector("header")?.getBoundingClientRect().bottom ?? 0,
+  );
+  const anchorTop = () =>
+    page.evaluate(
+      () =>
+        document.querySelector("[data-vox-comment-composer-anchor]")?.getBoundingClientRect().top ??
+        -1,
+    );
+  await expect.poll(async () => Math.abs((await anchorTop()) - headerBottom)).toBeLessThan(4);
+});

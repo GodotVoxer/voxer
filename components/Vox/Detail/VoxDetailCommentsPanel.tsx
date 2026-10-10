@@ -257,8 +257,9 @@ export const VoxDetailCommentsPanel = ({
       return;
     }
 
-    threadRef.current?.scrollScrollAreaToTop();
-    composerAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Instant, as on desktop: on the way up rows mount above the viewport, and each scroll correction
+    // the virtualizer makes for them cancels a smooth scroll before it arrives.
+    composerAnchorRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
     requestAnimationFrame(() => updateScrollToComposerFab());
   };
 
