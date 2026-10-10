@@ -5,6 +5,7 @@ import { createUniquePublicTag } from "@/server/comments/publicTag";
 import { pickAvatarVariant } from "@/server/comments/avatarVariant";
 import { sanitizePlainText } from "@/lib/format/plainText";
 import { normalizeCommentBody } from "@/lib/comments/normalizeCommentBody";
+import { commentBodyHasHideCommand } from "@/lib/comments/hideCommand";
 import { broadcastVoxActivity, emitToUserRoom, emitToVoxRoom } from "@/server/realtime/broadcast";
 import { countActiveCommentsForVox } from "@/server/vox/list";
 import {
@@ -259,6 +260,13 @@ export const createCommentOnVox = async (
         where: { id: voxId },
         data: { lastActivityAt: now },
       });
+      if (commentBodyHasHideCommand(text)) {
+        await tx.voxHide.upsert({
+          where: { userId_voxId: { userId: ctx.userId, voxId } },
+          create: { userId: ctx.userId, voxId },
+          update: {},
+        });
+      }
       await tx.user.update({
         where: { id: ctx.userId },
         data: {

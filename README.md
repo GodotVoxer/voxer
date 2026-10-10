@@ -9,7 +9,7 @@ La web también corre dentro de una app Android liviana, con notificaciones nati
 ## Funciones
 
 - Grilla de inicio con categorías, vox fijados, búsqueda y novedades en vivo cuando llegan vox y comentarios.
-- Detalle del vox con multimedia, encuestas, citas entre comentarios (`>>TAG`), comentarios fijados, IDs por hilo, banderas de país y comentarios en vivo.
+- Detalle del vox con multimedia, encuestas, citas entre comentarios (`>>TAG`), `>hide` para ocultar el vox al comentar, comentarios fijados, IDs por hilo, banderas de país y comentarios en vivo.
 - Anónimo por diseño: las respuestas públicas no llevan autor, dueño ni IP; los comentarios muestran solo un nombre de usuario (un seudónimo) y un tag por comentario.
 - Subida de imágenes, videos y GIFs, recodificados o sin metadatos en el servidor, y deduplicados por hash.
 - Notificaciones de respuestas y de vox seguidos: en la web, push en Android y Web Push en escritorio.

@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { FriendlyError } from "@/components/Shell/FriendlyError";
 import { BanBlockedDialog } from "@/components/Moderation/Dialogs/BanBlockedDialog";
 import { CommentLinkAttachDialog } from "@/components/Comments/Composer/CommentLinkAttachDialog";
+import { ComposerCheckOption } from "@/components/Comments/Composer/ComposerCheckOption";
 import { FileDropHintOverlay } from "@/components/FileDrop/FileDropHintOverlay";
 import { LocalVideoPreview } from "@/components/Media/LocalVideoPreview";
 import { SilentVideoGifOption } from "@/components/Media/SilentVideoGifOption";
 import { getFirstClipboardVoxUploadFile } from "@/features/media/uploadClientFiles";
 import { appendReplyTagToDraft } from "@/lib/comments/replies";
+import { HIDE_COMMAND } from "@/lib/comments/hideCommand";
 import { COMMENT_BODY_MAX, COMMENT_REPLY_TAGS_MAX } from "@/lib/limits";
 import { useCommentComposer } from "@/hooks/comments/useCommentComposer";
 import type { FloatingCommentComposer } from "@/hooks/comments/useFloatingCommentComposer";
@@ -379,17 +381,21 @@ export const CommentComposer = forwardRef<CommentComposerHandle, Props>(
             }}
             maxLength={COMMENT_BODY_MAX}
           />
-          {canShowStaffBadge ? (
-            <label className="flex cursor-pointer items-start gap-2 text-xs text-fg-muted">
-              <input
-                type="checkbox"
-                className="mt-0.5 size-3.5 shrink-0 cursor-pointer rounded border-fg/25 accent-brand-500"
+          <div className="flex flex-wrap items-start gap-x-4 gap-y-1.5">
+            {canShowStaffBadge ? (
+              <ComposerCheckOption
+                label="Mostrar mi usuario como staff"
                 checked={composer.showStaffIdentity}
-                onChange={(e) => composer.setShowStaffIdentity(e.target.checked)}
+                onCheckedChange={composer.setShowStaffIdentity}
               />
-              <span>Mostrar mi usuario como staff</span>
-            </label>
-          ) : null}
+            ) : null}
+            <ComposerCheckOption
+              label={HIDE_COMMAND}
+              title={`Agrega ${HIDE_COMMAND} al comentario y oculta este vox`}
+              checked={composer.hideVoxOnPost}
+              onCheckedChange={composer.setHideVoxOnPost}
+            />
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               {/* No `accept`: when it only allows media, Chrome on Android opens the Google Photos picker

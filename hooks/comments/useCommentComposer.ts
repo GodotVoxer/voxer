@@ -10,6 +10,8 @@ import { postComment, uploadMedia } from "@/features/vox/api";
 import { useVoxStore } from "@/features/vox/store";
 import type { CommentPublic } from "@/lib/vox/types";
 import { replyTagsErrorMessageEs, validateCommentReplyTagCountOnly } from "@/lib/comments/replies";
+import { appendHideCommandToBody, HIDE_COMMAND } from "@/lib/comments/hideCommand";
+import { COMMENT_BODY_MAX } from "@/lib/limits";
 import {
   parseBannedFromAxios,
   parseClientNetworkBlockedFromAxios,
@@ -50,6 +52,7 @@ export const useCommentComposer = ({ voxId, onPosted, pendingPollVote = null }: 
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [banPayload, setBanPayload] = useState<BanApiClientPayload | null>(null);
   const [showStaffIdentity, setShowStaffIdentity] = useState(false);
+  const [hideVoxOnPost, setHideVoxOnPost] = useState(false);
 
   const linkPreview = useMemo(() => {
     if (file && objectUrl) {
@@ -105,7 +108,11 @@ export const useCommentComposer = ({ voxId, onPosted, pendingPollVote = null }: 
       setError("Tenés que iniciar sesión para comentar.");
       return;
     }
-    const text = body.trim();
+    const text = hideVoxOnPost ? appendHideCommandToBody(body.trim()) : body.trim();
+    if (text.length > COMMENT_BODY_MAX) {
+      setError(`Acortá el comentario: no queda lugar para agregar ${HIDE_COMMAND}.`);
+      return;
+    }
     const linkTrim = linkUrl.trim();
     const hasMediaIntent = Boolean(file || linkTrim);
     if (!text && !hasMediaIntent && !pendingPollVote) {
@@ -172,6 +179,7 @@ export const useCommentComposer = ({ voxId, onPosted, pendingPollVote = null }: 
       setBody("");
       setLinkUrl("");
       setShowStaffIdentity(false);
+      setHideVoxOnPost(false);
       setFile(null);
       if (fileInput) fileInput.value = "";
       onPosted(posted);
@@ -241,6 +249,8 @@ export const useCommentComposer = ({ voxId, onPosted, pendingPollVote = null }: 
     banPayload,
     showStaffIdentity,
     setShowStaffIdentity,
+    hideVoxOnPost,
+    setHideVoxOnPost,
     clearFile,
     onPickFile,
     submit,

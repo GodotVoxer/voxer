@@ -5,6 +5,8 @@ import type { CommentPublic, VoxDetail, VoxPollPublic } from "@/lib/vox/types";
 import type { CommentRowActions } from "@/features/comments/commentRowActions";
 import { CommentHoverPreviewProvider } from "@/components/Comments/Overlays/CommentHoverPreviewContext";
 import { useAuthStore } from "@/features/auth/store";
+import { useVoxStore } from "@/features/vox/store";
+import { commentBodyHasHideCommand } from "@/lib/comments/hideCommand";
 import { isAdminRole, isStaffRole } from "@/lib/moderation/roles";
 import { useCommentThreadPopups } from "@/hooks/comments/useCommentThreadPopups";
 import { useMarkVoxNotificationsRead } from "@/hooks/notifications/useMarkVoxNotificationsRead";
@@ -408,6 +410,10 @@ export const VoxDetailView = ({
               onRetryComments={() => void reloadComments()}
               onPostedComment={(posted) => {
                 setPendingPollVote(null);
+                if (commentBodyHasHideCommand(posted.body) && !vox.hidden) {
+                  setVox((prev) => (prev ? { ...prev, hidden: true } : prev));
+                  useVoxStore.getState().removeVoxFromFeeds(id);
+                }
                 setPendingSocketComments((pending) => {
                   setComments((current) => mergeCommentsIntoList(current, [...pending, posted]));
                   return [];
