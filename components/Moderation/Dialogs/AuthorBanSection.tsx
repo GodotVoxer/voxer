@@ -55,6 +55,7 @@ const RadioRow = ({ name, checked, onSelect, label, children }: RadioRowProps) =
 );
 
 type AmountUnitProps = {
+  name: string;
   amountLabel: string;
   amount: string;
   onAmount: (v: string) => void;
@@ -62,12 +63,21 @@ type AmountUnitProps = {
   onUnit: (v: DurationUnit) => void;
 };
 
-const AmountUnitFields = ({ amountLabel, amount, onAmount, unit, onUnit }: AmountUnitProps) => (
+const AmountUnitFields = ({
+  name,
+  amountLabel,
+  amount,
+  onAmount,
+  unit,
+  onUnit,
+}: AmountUnitProps) => (
   <div className="grid grid-cols-2 gap-2">
     <label className="grid min-w-0 gap-1 text-xs text-fg-muted">
       {amountLabel}
       <input
         type="number"
+        name={name}
+        autoComplete="off"
         min={1}
         step={1}
         value={amount}
@@ -150,6 +160,8 @@ export const AuthorBanSection = ({
           <label className="grid gap-1 text-xs text-fg-muted">
             Motivo (obligatorio)
             <textarea
+              name="ban-reason"
+              autoComplete="off"
               value={draft.reason}
               onChange={(e) => onDraftChange({ reason: e.target.value })}
               rows={2}
@@ -167,6 +179,7 @@ export const AuthorBanSection = ({
               label="Temporal"
             >
               <AmountUnitFields
+                name="ban-duration-amount"
                 amountLabel="Cantidad"
                 amount={draft.amount}
                 onAmount={(amount) => onDraftChange({ amount })}
@@ -208,6 +221,7 @@ export const AuthorBanSection = ({
               >
                 {option.value === "window" ? (
                   <AmountUnitFields
+                    name="ban-content-window-amount"
                     amountLabel="Publicado en los últimos"
                     amount={draft.contentAmount}
                     onAmount={(contentAmount) => onDraftChange({ contentAmount })}

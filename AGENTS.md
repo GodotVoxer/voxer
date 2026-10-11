@@ -39,6 +39,7 @@ Android: `cd android && ./gradlew :app:testDebugUnitTest :app:assembleDebug`.
 
 - Do not add `relative` to Radix `DialogContent` (`components/ui/dialog.tsx`): it overrides `fixed` and moves the modal. Put positioning and drop handlers on an inner wrapper.
 - Staff `DropdownMenu`s are `modal={false}`: a modal menu that closes in the same tick a dialog opens leaves `pointer-events: none` on `body`.
+- Every text field (`input`, `textarea`) declares `autoComplete`, `"off"` plus a `name` unless it is a credential: without the hint Chrome and Android autofill take the form for a login and offer passwords (`tests/policy/formFieldAutofill.test.ts`).
 - File inputs have no `accept` attribute, and no upload step may require reading the file in JavaScript. See `docs/media-pipeline.md`.
 - The Android WebView lacks `navigator.share` and paints nothing for a `<video>` that never played; test media and sharing changes there.
 

@@ -334,6 +334,8 @@ export const CommentComposer = forwardRef<CommentComposerHandle, Props>(
           <textarea
             ref={textareaRef}
             data-comment-composer-input
+            name="comment-body"
+            autoComplete="off"
             className="w-full min-h-[120px] max-h-[260px] resize-none overflow-y-auto rounded-md bg-surface-raised border border-fg/15 px-3 py-2 text-sm text-fg placeholder:text-fg-subtle disabled:cursor-not-allowed disabled:opacity-70"
             placeholder={
               pendingPollVote

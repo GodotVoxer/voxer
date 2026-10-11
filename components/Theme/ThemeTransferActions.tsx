@@ -211,6 +211,7 @@ export const ThemeTransferActions = ({ input, onImport }: Props) => {
           </label>
           <textarea
             id="theme-json-import"
+            name="theme-json-import"
             value={pastedJson}
             maxLength={CUSTOM_THEME_IMPORT_MAX_BYTES}
             rows={6}

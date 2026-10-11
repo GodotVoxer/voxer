@@ -111,6 +111,8 @@ export const GradientStopsEditor = ({
               <label htmlFor={`${idPrefix}-${index}-pos`}>Posición</label>
               <input
                 id={`${idPrefix}-${index}-pos`}
+                name={`${idPrefix}-${index}-pos`}
+                autoComplete="off"
                 type="number"
                 min={0}
                 max={100}

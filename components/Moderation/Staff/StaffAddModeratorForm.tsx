@@ -25,6 +25,8 @@ export const StaffAddModeratorForm = ({ onStaffListUpdate, onAuthRefresh }: Prop
         <label className="grid min-w-[180px] flex-1 gap-1 text-xs text-fg-muted">
           Usuario
           <input
+            name="staff-add-account"
+            autoComplete="off"
             value={staffAddUsername}
             onChange={(e) => {
               setStaffAddUsername(e.target.value);

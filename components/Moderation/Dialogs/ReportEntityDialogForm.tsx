@@ -79,6 +79,8 @@ export const ReportEntityDialogForm = ({
           </div>
           <textarea
             id="report-details"
+            name="report-details"
+            autoComplete="off"
             value={details}
             placeholder="Aclaración breve para los moderadores…"
             onChange={(e) => onDetailsChange(e.target.value)}

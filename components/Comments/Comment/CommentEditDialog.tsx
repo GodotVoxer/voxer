@@ -106,6 +106,8 @@ const CommentEditForm = ({
         <label className="grid gap-1 text-sm text-fg-secondary">
           Texto
           <textarea
+            name="comment-edit-body"
+            autoComplete="off"
             className="max-h-[50vh] min-h-[140px] rounded-md border border-fg/15 bg-surface-sunken px-3 py-2 text-sm text-fg"
             value={body}
             onChange={(e) => setBody(e.target.value)}

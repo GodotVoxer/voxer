@@ -80,6 +80,8 @@ export const ThemeColorField = ({ id, label, value, overridden, onChange, onRese
         </label>
         <input
           id={`${id}-hex`}
+          name={`${id}-hex`}
+          autoComplete="off"
           value={text}
           onChange={(e) => {
             setText(e.target.value);

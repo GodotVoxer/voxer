@@ -68,6 +68,8 @@ export const VoxDetailEditDialog = ({
           <label className="grid gap-1 text-sm text-fg-secondary">
             Título
             <input
+              name="vox-edit-title"
+              autoComplete="off"
               className="rounded-md border border-fg/15 bg-surface-sunken px-3 py-2 text-sm text-fg"
               value={draft.title}
               onChange={(e) => onDraftChange({ ...draft, title: e.target.value })}
@@ -78,6 +80,8 @@ export const VoxDetailEditDialog = ({
           <label className="grid gap-1 text-sm text-fg-secondary">
             Descripción
             <textarea
+              name="vox-edit-description"
+              autoComplete="off"
               className="max-h-[50vh] min-h-[140px] rounded-md border border-fg/15 bg-surface-sunken px-3 py-2 text-sm text-fg"
               value={draft.description}
               onChange={(e) => onDraftChange({ ...draft, description: e.target.value })}

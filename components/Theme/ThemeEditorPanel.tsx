@@ -208,6 +208,8 @@ export const ThemeEditorPanel = ({ target }: { target: ThemeEditorTarget }) => {
                 </label>
                 <input
                   id="theme-editor-name"
+                  name="theme-label"
+                  autoComplete="off"
                   value={input.name}
                   maxLength={CUSTOM_THEME_NAME_MAX}
                   onChange={(e) => update({ ...input, name: e.target.value })}

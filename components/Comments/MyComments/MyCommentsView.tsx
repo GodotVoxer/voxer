@@ -110,6 +110,7 @@ export const MyCommentsView = () => {
         />
         <Input
           type="search"
+          name="my-comments-search"
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           placeholder="Buscar en tus comentarios…"

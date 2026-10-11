@@ -112,6 +112,8 @@ export const CommentLinkAttachDialog = ({
               Enlace
               <input
                 autoFocus
+                name="comment-link"
+                autoComplete="off"
                 className="rounded-md border border-fg/15 bg-surface-sunken px-3 py-2 text-sm text-fg placeholder:text-fg-subtle"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}

@@ -25,12 +25,16 @@ export const ModerationActionFilters = ({
       className="flex flex-wrap gap-2"
     >
       <input
+        name="moderation-filter-moderator"
+        autoComplete="off"
         placeholder="Username del moderador (exacto o parte)"
         value={moderatorUsername}
         onChange={(e) => onModeratorUsernameChange(e.target.value)}
         className="min-w-[200px] flex-1 rounded-md border border-fg/15 bg-surface-sunken px-2 py-2 text-sm"
       />
       <input
+        name="moderation-filter-ban-id"
+        autoComplete="off"
         placeholder="Filtrar por ID de ban"
         value={banIdFilter}
         onChange={(e) => onBanIdFilterChange(e.target.value)}
