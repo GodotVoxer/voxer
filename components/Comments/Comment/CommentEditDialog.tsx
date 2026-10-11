@@ -105,10 +105,13 @@ const CommentEditForm = ({
       <div className="space-y-3 py-2">
         <label className="grid gap-1 text-sm text-fg-secondary">
           Texto
+          {/* The placeholder is for the Android app: Google's autofill ignores `autoComplete` there and
+              offered saved passwords on this field while "Texto" was all it could read. */}
           <textarea
             name="comment-edit-body"
             autoComplete="off"
-            className="max-h-[50vh] min-h-[140px] rounded-md border border-fg/15 bg-surface-sunken px-3 py-2 text-sm text-fg"
+            placeholder="Texto del comentario"
+            className="max-h-[50vh] min-h-[140px] rounded-md border border-fg/15 bg-surface-sunken px-3 py-2 text-sm text-fg placeholder:text-fg-subtle"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             maxLength={COMMENT_BODY_MAX}

@@ -96,6 +96,15 @@ Están documentadas junto al código, en `web/WebViewSetup.kt` y las clases que 
 - **Las ventanas nuevas** (`onCreateWindow`) nacen en un WebView descartable; los links al propio sitio hay que llevarlos a mano al WebView principal, o el toque no hace nada.
 - **Selector de archivos.** `FileChooserController` usa el selector estándar y no el Photo Picker, que solo lista la galería del dispositivo y dejaba afuera a Archivos, Drive y los inputs que no son multimedia (importar un tema `.json`). Las cámaras van como intents iniciales. `FileChooserParams.createIntent()` solo declara el primer tipo del `accept`, así que el controlador pide un comodín y lista todos los tipos en `EXTRA_MIME_TYPES`.
 - **Los archivos elegidos se copian primero** (`PickedFileStore`). Abrir un `InputStream` obliga a Google Fotos o Drive a descargar una foto que está solo en la nube; el WebView leyendo el URI directo falla con `NotReadableError`. Sacar la copia trae de vuelta ese error solo para quien tiene activado «liberar espacio», así que cuesta reproducirlo.
+- **El autocompletado de Android no le hace caso a `autocomplete="off"`.** El WebView le pasa cada campo de texto al servicio de autocompletado (el de Google, por defecto), que decide por el placeholder y la etiqueta: ofrece las contraseñas guardadas si lee una credencial («Username del moderador») o si no entiende qué es el campo (un `textarea` con la etiqueta «Texto» y sin placeholder). Un placeholder descriptivo lo evita («Texto del comentario»). Para comprobar un campo, con la app abierta y el teléfono por USB, tocalo y mirá cuántas credenciales devolvió el servicio:
+
+  ```bash
+  adb logcat -c   # y después de tocar el campo:
+  adb logcat -d | grep -o "AutofillFillResponseReported.*mAvailableCount=[0-9]*"
+  ```
+
+  `mAvailableCount=0` es lo esperado en todo campo que no sea el login. Si la línea no aparece, activá el registro con `adb shell cmd autofill set log_level verbose`.
+
 - **Kotlin anida los comentarios de bloque.** Un comodín MIME literal dentro de un `/** */` abre un comentario interno que se traga el resto del archivo.
 
 ## F-Droid

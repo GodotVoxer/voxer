@@ -27,7 +27,7 @@ export const ModerationActionFilters = ({
       <input
         name="moderation-filter-moderator"
         autoComplete="off"
-        placeholder="Username del moderador (exacto o parte)"
+        placeholder="Moderador (exacto o parte)"
         value={moderatorUsername}
         onChange={(e) => onModeratorUsernameChange(e.target.value)}
         className="min-w-[200px] flex-1 rounded-md border border-fg/15 bg-surface-sunken px-2 py-2 text-sm"

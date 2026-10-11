@@ -33,7 +33,10 @@ const literalAttribute = (attributes: ts.JsxAttributes, name: string): string | 
   return null;
 };
 
-const fieldsWithoutAutocomplete = (rel: string, source: string): string[] => {
+const CREDENTIAL_AUTOCOMPLETE = new Set(["username", "current-password", "new-password"]);
+const CREDENTIAL_WORD_RE = /user\s?name|usuario|contraseña|password|login/i;
+
+const autofillHits = (rel: string, source: string): string[] => {
   const file = ts.createSourceFile(rel, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const hits: string[] = [];
   const visit = (node: ts.Node) => {
@@ -45,9 +48,17 @@ const fieldsWithoutAutocomplete = (rel: string, source: string): string[] => {
       const isWrapper = names.includes(null);
       const type = literalAttribute(attrs, "type");
       const typedInto = tag === "textarea" || type === null || !UNTYPED_INPUT_TYPES.has(type);
-      if (FIELD_TAGS.has(tag) && typedInto && !isWrapper && !names.includes("autoComplete")) {
+      if (FIELD_TAGS.has(tag) && typedInto && !isWrapper) {
         const { line } = file.getLineAndCharacterOfPosition(node.getStart());
-        hits.push(`${rel}:${line + 1} <${tag}>`);
+        const where = `${rel}:${line + 1} <${tag}>`;
+        if (!names.includes("autoComplete")) hits.push(`${where} has no autoComplete`);
+        const isCredential = CREDENTIAL_AUTOCOMPLETE.has(
+          literalAttribute(attrs, "autoComplete") ?? "",
+        );
+        const placeholder = literalAttribute(attrs, "placeholder") ?? "";
+        if (!isCredential && CREDENTIAL_WORD_RE.test(placeholder)) {
+          hits.push(`${where} placeholder reads as a credential: "${placeholder}"`);
+        }
       }
     }
     ts.forEachChild(node, visit);
@@ -59,13 +70,13 @@ const fieldsWithoutAutocomplete = (rel: string, source: string): string[] => {
 describe("form field autofill", () => {
   // A field with no hint is guessed from its label and neighbours: Chrome and Android autofill have
   // taken comment and vox fields for a login or sign-up form and offered saved passwords.
-  it("every field the user types into declares autoComplete", () => {
+  //
+  // The Android app's autofill ignores `autoComplete`: it reads the placeholder, and one that names a
+  // credential makes it offer passwords on every field of that form.
+  it("every field the user types into declares autoComplete and no credential placeholder", () => {
     const hits = SCAN_DIRS.flatMap((dir) =>
       walk(path.join(ROOT, dir)).flatMap((abs) =>
-        fieldsWithoutAutocomplete(
-          path.relative(ROOT, abs).split(path.sep).join("/"),
-          readFileSync(abs, "utf8"),
-        ),
+        autofillHits(path.relative(ROOT, abs).split(path.sep).join("/"), readFileSync(abs, "utf8")),
       ),
     );
     expect(hits).toEqual([]);
