@@ -45,6 +45,10 @@ Con un vox abierto, sus notificaciones se marcan como leídas solas, pero solo l
 
 La lógica está en `features/notifications/markVoxRead.ts` y `hooks/notifications/useMarkVoxNotificationsRead.ts`.
 
+### Lectura al tocar una notificación del sistema
+
+Tocar una notificación del sistema con Voxer ya abierto (en la app Android o en una pestaña) marca como leídas todas las del vox, igual que tocar su fila en la campana, y las de denuncias si el push era de una denuncia (`features/notifications/markVoxReadOnPushOpen.ts`). No espera al vox abierto: ese pedido sale solo si el contador de no leídas es mayor que cero, y en la app Android el contador queda viejo mientras está en segundo plano, porque los sockets se suspenden y el push llega por FCM o UnifiedPush. Recién se actualiza cuando la sala del usuario reconecta, y hasta entonces la fila de la campana quedaba sin leer. En un arranque en frío el contador llega nuevo con la página y alcanza con la regla de arriba.
+
 ## Escritorio
 
 - El servidor hace POST al endpoint que registró el navegador, así que `server/push/webPushSubscription.ts` solo acepta hosts de servicios de push conocidos (Google, Mozilla, Apple, Microsoft): cualquier otro host convertiría cada comentario en un pedido del servidor a una URL arbitraria.

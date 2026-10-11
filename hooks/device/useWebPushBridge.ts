@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store";
 import { registerWebPushSubscription } from "@/features/push/api";
-import { navigateToPushPath } from "@/features/push/navigateToPushPath";
+import { openPushPath } from "@/features/push/navigateToPushPath";
 import {
   ensureWebPushRegistration,
   getWebPushRegistration,
@@ -35,7 +35,7 @@ export const useWebPushBridge = () => {
     if (!isWebPushSupported()) return;
     const onMessage = (e: MessageEvent) => {
       if (!isPushNavigateMessage(e.data)) return;
-      navigateToPushPath(e.data.path, router.push);
+      openPushPath(e.data.path, router.push);
     };
     navigator.serviceWorker.addEventListener("message", onMessage);
     navigator.serviceWorker.startMessages();

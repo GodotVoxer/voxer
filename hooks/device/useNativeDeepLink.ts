@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { readAndroidBridge, type NativeCallbacks } from "@/features/native/androidBridge";
-import { navigateToPushPath } from "@/features/push/navigateToPushPath";
+import { openPushPath } from "@/features/push/navigateToPushPath";
 
 type NativeWindow = Window & { __voxerNative?: NativeCallbacks };
 
@@ -16,7 +16,7 @@ export const useNativeDeepLink = () => {
     if (!bridge) return;
 
     const w = window as NativeWindow;
-    const navigate = (path: string) => navigateToPushPath(path, router.push);
+    const navigate = (path: string) => openPushPath(path, router.push);
 
     w.__voxerNative = { ...w.__voxerNative, navigate };
     return () => {
