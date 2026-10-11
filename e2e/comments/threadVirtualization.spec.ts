@@ -151,7 +151,14 @@ test("scrolling the page down and back up shows no gaps and no jumps", async ({
   await scrollInSteps(page, -420, 30);
 });
 
-type FlingStats = { frames: number; distance: number; gapFrames: number; worstJump: number };
+type FlingStats = {
+  frames: number;
+  distance: number;
+  gapFrames: number;
+  worstJump: number;
+  /** What the worst jump looked like, for the failure message. */
+  worstJumpAt: string;
+};
 
 /** Samples every frame of a fling: blank stretches of thread, and rows that move against the scroll. */
 const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats> => {
@@ -163,8 +170,9 @@ const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats
       frames: 0,
       gapFrames: 0,
       worstJump: 0,
+      worstJumpAt: "",
       startY: window.scrollY,
-      prev: null as null | { tag: string; top: number },
+      prev: null as null | { tag: string; top: number; scrollY: number },
     };
     (window as unknown as { __fling: typeof state }).__fling = state;
     const frame = () => {
@@ -185,7 +193,10 @@ const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats
       if (same && state.prev) {
         // Scrolling down, content moves up, and the other way around: anything else is a jump.
         const moved = same.getBoundingClientRect().top - state.prev.top;
-        state.worstJump = Math.max(state.worstJump, moved * direction);
+        if (moved * direction > state.worstJump) {
+          state.worstJump = moved * direction;
+          state.worstJumpAt = `cuadro ${state.frames}: la fila se movió ${moved}px y scrollY ${window.scrollY - state.prev.scrollY}px`;
+        }
       }
       const middle = (headerBottom + window.innerHeight) / 2;
       const next =
@@ -194,7 +205,11 @@ const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats
           return rect.top <= middle && rect.bottom > middle;
         }) ?? null;
       state.prev = next
-        ? { tag: next.dataset.tag ?? "", top: next.getBoundingClientRect().top }
+        ? {
+            tag: next.dataset.tag ?? "",
+            top: next.getBoundingClientRect().top,
+            scrollY: window.scrollY,
+          }
         : null;
       requestAnimationFrame(frame);
     };
@@ -219,6 +234,7 @@ const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats
           frames: number;
           gapFrames: number;
           worstJump: number;
+          worstJumpAt: string;
           startY: number;
         };
       }
@@ -229,6 +245,7 @@ const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats
       distance: window.scrollY - state.startY,
       gapFrames: state.gapFrames,
       worstJump: state.worstJump,
+      worstJumpAt: state.worstJumpAt,
     };
   });
 };
@@ -248,7 +265,7 @@ test("a fling through the thread never shows a blank stretch nor a jump", async 
   expect(down.distance).toBeGreaterThan(6000);
   expect(down.frames).toBeGreaterThan(30);
   expect(down.gapFrames).toBe(0);
-  expect(down.worstJump).toBeLessThanOrEqual(2);
+  expect(down.worstJump, down.worstJumpAt).toBeLessThanOrEqual(2);
 
   // Back up from rows never measured: they resize above the viewport during the scroll.
   await page.evaluate(() =>
@@ -258,7 +275,7 @@ test("a fling through the thread never shows a blank stretch nor a jump", async 
   const up = await flingAndSample(page, 9000);
   expect(up.distance).toBeLessThan(-6000);
   expect(up.gapFrames).toBe(0);
-  expect(up.worstJump).toBeLessThanOrEqual(2);
+  expect(up.worstJump, up.worstJumpAt).toBeLessThanOrEqual(2);
 });
 
 for (const cold of [true, false]) {
