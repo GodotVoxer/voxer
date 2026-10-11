@@ -153,7 +153,7 @@ test("scrolling the page down and back up shows no gaps and no jumps", async ({
 
 type FlingStats = { frames: number; distance: number; gapFrames: number; worstJump: number };
 
-/** Samples every frame of a touch fling: blank stretches of thread, and rows that move against the scroll. */
+/** Samples every frame of a fling: blank stretches of thread, and rows that move against the scroll. */
 const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats> => {
   // Known from the gesture: corrections for rows resizing above the viewport also move `scrollY`.
   const direction = yDistance < 0 ? 1 : -1;
@@ -200,13 +200,15 @@ const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats
     };
     requestAnimationFrame(frame);
   }, direction);
+  // Wheel-driven: with a touch source the gesture moves the pointer but scrolls nothing in headless
+  // Chromium on Linux, where CI runs. Both scroll on the compositor, ahead of rendering.
   const client = await page.context().newCDPSession(page);
   await client.send("Input.synthesizeScrollGesture", {
     x: 200,
     y: 500,
     yDistance,
     speed: 5000,
-    gestureSourceType: "touch",
+    gestureSourceType: "mouse",
   });
   await settle(page);
   return page.evaluate(() => {
@@ -231,7 +233,7 @@ const flingAndSample = async (page: Page, yDistance: number): Promise<FlingStats
   });
 };
 
-test("a touch fling through the thread never shows a blank stretch nor a jump", async ({
+test("a fling through the thread never shows a blank stretch nor a jump", async ({
   page,
 }, testInfo) => {
   mobileOnly(testInfo.project.name);
@@ -248,7 +250,7 @@ test("a touch fling through the thread never shows a blank stretch nor a jump", 
   expect(down.gapFrames).toBe(0);
   expect(down.worstJump).toBeLessThanOrEqual(2);
 
-  // Back up from rows never measured: they resize above the viewport while the finger moves.
+  // Back up from rows never measured: they resize above the viewport during the scroll.
   await page.evaluate(() =>
     window.scrollTo({ top: document.documentElement.scrollHeight * 0.8, behavior: "instant" }),
   );
