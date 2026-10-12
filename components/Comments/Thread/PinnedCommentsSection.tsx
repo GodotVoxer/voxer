@@ -141,6 +141,7 @@ export const PinnedCommentsSection = ({
                     comment={c}
                     voxId={voxId}
                     pinnedCopy
+                    rememberAttachmentSize
                     onReplyTag={onReplyTag}
                     onTagClick={onTagClick}
                     taggedBy={taggedByIndex.get(c.publicTag.toUpperCase()) ?? []}

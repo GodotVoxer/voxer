@@ -29,8 +29,11 @@ type DemoSeed = {
   nsfwPromptAnswered?: boolean;
   /** Persisted device settings (the `features/settings` store state). */
   settings?: Record<string, unknown>;
-  /** Every vox with comments opens with this many more, one of them carrying the video. */
-  longThread?: { size: number; videoUrl?: string };
+  /**
+   * Every vox with comments opens with this many more, one of them carrying the video and, with
+   * `imageUrl`, every third one its own image (`imageUrl?n=<index>`).
+   */
+  longThread?: { size: number; videoUrl?: string; imageUrl?: string };
 };
 
 const persisted = (state: Record<string, unknown>) => JSON.stringify({ state, version: 0 });

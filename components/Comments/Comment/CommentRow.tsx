@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { isYoutubeEmbedUrl } from "@/lib/media/youtube";
 import { CommentAuthorAvatar, CommentAuthorName } from "./CommentAuthorIdentity";
 import { CommentAttachmentBlock, commentThreadMediaClassName } from "./CommentAttachmentBlock";
+import { RememberedMediaBox } from "@/components/Media/RememberedMediaBox";
 import { CommentBody } from "./CommentBody";
 import { CommentPollVoteBadge } from "./CommentPollVoteBadge";
 import { CommentTaggedByBar } from "./CommentTaggedByBar";
@@ -41,6 +42,8 @@ type Props = {
   copy?: boolean;
   /** Dialog rows are narrow: without the age, the header fits on one line. */
   hideTimestamp?: boolean;
+  /** Rows of a virtualized list: the attachment is mounted again with the size it had. */
+  rememberAttachmentSize?: boolean;
   onModeratorDelete?: () => void;
   onModeratorPublicationMod?: () => void;
   moderatorAuthorHistoryHref?: string;
@@ -65,6 +68,7 @@ export const CommentRow = ({
   pinnedCopy = false,
   copy = false,
   hideTimestamp = false,
+  rememberAttachmentSize = false,
   onModeratorDelete,
   onModeratorPublicationMod,
   moderatorAuthorHistoryHref,
@@ -198,7 +202,13 @@ export const CommentRow = ({
               />
               {hasMedia ? (
                 <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:gap-3">
-                  <div
+                  <RememberedMediaBox
+                    // The pinned block is narrower than the thread: each keeps its own size.
+                    memoryId={
+                      rememberAttachmentSize
+                        ? `${pinnedCopy ? "pinned" : "thread"}:${comment.id}`
+                        : null
+                    }
                     className={cn(
                       "w-full min-w-0 shrink-0",
                       // The YouTube embed is `aspect-video w-full`: with `w-fit` the percentage width collapses to 0.
@@ -217,7 +227,7 @@ export const CommentRow = ({
                       animatedImage={comment.animatedImage}
                       mediaClassName={commentThreadMediaClassName}
                     />
-                  </div>
+                  </RememberedMediaBox>
                   {bodyTrimmed ? (
                     <div
                       className={cn("min-w-0 w-full sm:flex-1", !readOnly && "sm:min-w-[18rem]")}

@@ -176,6 +176,7 @@ export const CommentThread = forwardRef<CommentThreadHandle, Props>(function Com
               <CommentRow
                 comment={c}
                 voxId={voxId}
+                rememberAttachmentSize
                 highlighted={
                   Boolean(highlightPublicTagUpper) &&
                   c.publicTag.toUpperCase() === highlightPublicTagUpper

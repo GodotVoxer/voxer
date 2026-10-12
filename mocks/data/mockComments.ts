@@ -146,9 +146,12 @@ const seededTag = (seed: string): string => {
 };
 export const MSW_DEMO_LONG_THREAD_KEY = "voxer:msw-demo-long-thread";
 
-type LongThread = { size: number; videoUrl?: string };
+type LongThread = { size: number; videoUrl?: string; imageUrl?: string };
 
-/** e2e: a JSON `{ size, videoUrl? }` under this key seeds that many comments, one of them with the video. */
+/**
+ * e2e: a JSON `{ size, videoUrl?, imageUrl? }` under this key seeds that many comments, one of them
+ * with the video and every third one with its own image (`imageUrl?n=<index>`).
+ */
 const readLongThread = (): LongThread | null => {
   try {
     const raw = window.localStorage.getItem(MSW_DEMO_LONG_THREAD_KEY);
@@ -160,6 +163,7 @@ const readLongThread = (): LongThread | null => {
 };
 
 const LONG_THREAD_VIDEO_INDEX = 2;
+const LONG_THREAD_IMAGE_EVERY = 3;
 
 const LONG_THREAD_WRAPPING_LINE =
   "Una línea larga que en pantalla ocupa varias, para que la fila mida distinto de lo estimado y haya algo que corregir al medirla.";
@@ -189,7 +193,10 @@ export const seedMockComments = (voxId: string, repliesHint: number) => {
       publicTag: seededTag(`${voxId}-cx-${i}`),
       body: longThread ? longThreadBody(i) : `Comentario demo #${i + 1}`,
       displayName: "Anónimo",
-      imageUrl: null,
+      imageUrl:
+        longThread?.imageUrl && i % LONG_THREAD_IMAGE_EVERY === 0
+          ? `${longThread.imageUrl}?n=${i}`
+          : null,
       videoUrl: (i === LONG_THREAD_VIDEO_INDEX && longThread?.videoUrl) || null,
       videoPosterUrl: null,
       avatarVariant: "YELLOW",
