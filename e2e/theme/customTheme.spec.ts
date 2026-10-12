@@ -183,15 +183,19 @@ test.describe("custom themes", () => {
     await expect(page.getByRole("link", { name: "VOXER" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Notificaciones" })).toBeVisible();
 
-    const headerControlContrast = await page
-      .getByRole("button", { name: "Notificaciones" })
-      .evaluate((el) => {
-        const style = getComputedStyle(el);
-        return { fg: style.color, bg: style.backgroundColor };
-      });
-    expect(
-      contrastRatio(headerControlContrast.fg, headerControlContrast.bg),
-    ).toBeGreaterThanOrEqual(4.5);
+    // Retried: while the theme's colors are still transitioning the computed values are interpolated
+    // ones (`oklab(...)`), not the theme's.
+    await expect(async () => {
+      const headerControlContrast = await page
+        .getByRole("button", { name: "Notificaciones" })
+        .evaluate((el) => {
+          const style = getComputedStyle(el);
+          return { fg: style.color, bg: style.backgroundColor };
+        });
+      expect(
+        contrastRatio(headerControlContrast.fg, headerControlContrast.bg),
+      ).toBeGreaterThanOrEqual(4.5);
+    }).toPass();
 
     await openSidebar(page);
     const sidebar = page.locator(".app-sidebar");
