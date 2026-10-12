@@ -146,11 +146,18 @@ const seededTag = (seed: string): string => {
 };
 export const MSW_DEMO_LONG_THREAD_KEY = "voxer:msw-demo-long-thread";
 
-type LongThread = { size: number; videoUrl?: string; imageUrl?: string };
+type LongThread = {
+  size: number;
+  videoUrl?: string;
+  imageUrl?: string;
+  loopUrl?: string;
+  loopPosterUrl?: string;
+};
 
 /**
- * e2e: a JSON `{ size, videoUrl?, imageUrl? }` under this key seeds that many comments, one of them
- * with the video and every third one with its own image (`imageUrl?n=<index>`).
+ * e2e: a JSON under this key seeds `size` comments: one with the video, every third one with its
+ * own image (`imageUrl?n=<index>`) and the ones after those with a GIF stored as video
+ * (`loopUrl?n=<index>`, poster `loopPosterUrl?n=<index>`).
  */
 const readLongThread = (): LongThread | null => {
   try {
@@ -163,7 +170,7 @@ const readLongThread = (): LongThread | null => {
 };
 
 const LONG_THREAD_VIDEO_INDEX = 2;
-const LONG_THREAD_IMAGE_EVERY = 3;
+const LONG_THREAD_MEDIA_EVERY = 3;
 
 const LONG_THREAD_WRAPPING_LINE =
   "Una línea larga que en pantalla ocupa varias, para que la fila mida distinto de lo estimado y haya algo que corregir al medirla.";
@@ -188,17 +195,22 @@ export const seedMockComments = (voxId: string, repliesHint: number) => {
   const extra = longThread?.size ?? Math.min(12, Math.max(0, repliesHint - list.length));
   const t0 = Date.now();
   for (let i = 0; i < extra; i++) {
+    const loops = Boolean(longThread?.loopUrl) && i % LONG_THREAD_MEDIA_EVERY === 1;
     list.push({
       id: `${voxId}-cx-${i}`,
       publicTag: seededTag(`${voxId}-cx-${i}`),
       body: longThread ? longThreadBody(i) : `Comentario demo #${i + 1}`,
       displayName: "Anónimo",
       imageUrl:
-        longThread?.imageUrl && i % LONG_THREAD_IMAGE_EVERY === 0
+        longThread?.imageUrl && i % LONG_THREAD_MEDIA_EVERY === 0
           ? `${longThread.imageUrl}?n=${i}`
           : null,
-      videoUrl: (i === LONG_THREAD_VIDEO_INDEX && longThread?.videoUrl) || null,
-      videoPosterUrl: null,
+      videoUrl:
+        (i === LONG_THREAD_VIDEO_INDEX && longThread?.videoUrl) ||
+        (loops ? `${longThread?.loopUrl}?n=${i}` : null),
+      videoPosterUrl:
+        loops && longThread?.loopPosterUrl ? `${longThread.loopPosterUrl}?n=${i}` : null,
+      animatedImage: loops,
       avatarVariant: "YELLOW",
       isOp: false,
       threadTag: null,

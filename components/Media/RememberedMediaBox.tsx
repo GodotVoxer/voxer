@@ -19,6 +19,11 @@ const layoutViewport = () => ({
   height: document.documentElement.clientHeight,
 });
 
+const rememberBox = (memoryId: string, el: HTMLElement) => {
+  const { width, height } = el.getBoundingClientRect();
+  rememberRenderedBox(memoryId, layoutViewport(), { width, height });
+};
+
 /**
  * Wrapper that comes back with the size its media had last time, until the media loads again. A
  * virtualized row is mounted anew on every pass, and by then the browser may have dropped its image
@@ -34,22 +39,21 @@ export const RememberedMediaBox = ({ memoryId, className, children }: Props) => 
       : recallRenderedBox(memoryId, layoutViewport());
 
   const settleIfLoaded = () => {
-    if (ref.current && isMediaSettled(ref.current)) setSettled(true);
+    const el = ref.current;
+    if (!el || !isMediaSettled(el)) return;
+    // A poster already gave the video its size: nothing resizes when the metadata settles it.
+    if (memoryId !== null) rememberBox(memoryId, el);
+    setSettled(true);
   };
 
   // Media still in memory is complete before any event: nothing else would release the reserved size.
-  useLayoutEffect(settleIfLoaded, []);
+  useLayoutEffect(settleIfLoaded, [memoryId]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || memoryId === null || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(([entry]) => {
-      const size = entry?.borderBoxSize[0];
-      if (!size || !isMediaSettled(el)) return;
-      rememberRenderedBox(memoryId, layoutViewport(), {
-        width: size.inlineSize,
-        height: size.blockSize,
-      });
+    const ro = new ResizeObserver(() => {
+      if (isMediaSettled(el)) rememberBox(memoryId, el);
     });
     ro.observe(el);
     return () => ro.disconnect();

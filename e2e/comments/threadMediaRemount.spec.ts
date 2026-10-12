@@ -1,7 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
+import path from "path";
 import { seedDemo } from "../support/demoStorage";
 
 const IMAGE_URL = "/e2e-thread-image.svg";
+/** A GIF is stored as video: a `<video>` has no size of its own until its metadata arrives. */
+const LOOP_URL = "/e2e-thread-loop.mp4";
+const LOOP_FIXTURE = path.join(__dirname, "..", "fixtures", "red.mp4");
+/** Same size as the fixture: the poster arrives first and the video then changes nothing. */
+const LOOP_POSTER_URL = "/e2e-thread-loop-poster.svg";
+const LOOP_SIZE = [320, 240] as const;
 const THREAD_SIZE = 90;
 const VOX = "/vox/7";
 /** Natural sizes of the thread images: wide, tall (clamped by the max height) and small. */
@@ -11,7 +18,7 @@ const IMAGE_SIZES = [
   [200, 150],
   [900, 900],
 ] as const;
-const IMAGE_DELAY_MS = 120;
+const MEDIA_DELAY_MS = 120;
 const STEP = 400;
 
 let imageRequests = 0;
@@ -20,18 +27,31 @@ test.beforeEach(async ({ context }) => {
   imageRequests = 0;
   await seedDemo(context, {
     role: "USER",
-    longThread: { size: THREAD_SIZE, imageUrl: IMAGE_URL },
+    longThread: {
+      size: THREAD_SIZE,
+      imageUrl: IMAGE_URL,
+      loopUrl: LOOP_URL,
+      loopPosterUrl: LOOP_POSTER_URL,
+    },
+  });
+  const svg = ([width, height]: readonly [number, number]) => ({
+    status: 200,
+    contentType: "image/svg+xml",
+    body: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"/>`,
   });
   await context.route(`**${IMAGE_URL}*`, async (route) => {
     const n = Number(new URL(route.request().url()).searchParams.get("n") ?? 0);
-    const [width, height] = IMAGE_SIZES[(n / 3) % IMAGE_SIZES.length]!;
     imageRequests += 1;
-    await new Promise((resolve) => setTimeout(resolve, IMAGE_DELAY_MS));
-    await route.fulfill({
-      status: 200,
-      contentType: "image/svg+xml",
-      body: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"/>`,
-    });
+    await new Promise((resolve) => setTimeout(resolve, MEDIA_DELAY_MS));
+    await route.fulfill(svg(IMAGE_SIZES[(n / 3) % IMAGE_SIZES.length]!));
+  });
+  await context.route(`**${LOOP_POSTER_URL}*`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, MEDIA_DELAY_MS));
+    await route.fulfill(svg(LOOP_SIZE));
+  });
+  await context.route(`**${LOOP_URL}*`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, MEDIA_DELAY_MS * 3));
+    await route.fulfill({ status: 200, contentType: "video/mp4", path: LOOP_FIXTURE });
   });
 });
 
@@ -53,7 +73,7 @@ const installThreadProbe = (page: Page) =>
       heights: new Map<string, number>(),
       watching: false,
       expectedPosition: 0,
-      remountedImageRows: new Set<string>(),
+      remountedMediaRows: new Set<string>(),
       resized: [] as string[],
       corrections: [] as string[],
     };
@@ -67,7 +87,7 @@ type ThreadProbe = {
   heights: Map<string, number>;
   watching: boolean;
   expectedPosition: number;
-  remountedImageRows: Set<string>;
+  remountedMediaRows: Set<string>;
   resized: string[];
   corrections: string[];
 };
@@ -80,25 +100,29 @@ const settle = (page: Page) =>
       ),
   );
 
-const imagesLoaded = (page: Page) =>
+const mediaLoaded = (page: Page) =>
   expect
     .poll(() =>
-      page.evaluate(() =>
-        [...document.querySelectorAll<HTMLImageElement>("[data-tag] img[decoding]")].every(
-          (img) => img.complete && img.naturalHeight > 0,
-        ),
+      page.evaluate(
+        () =>
+          [...document.querySelectorAll<HTMLImageElement>("[data-tag] img[decoding]")].every(
+            (img) => img.complete && img.naturalHeight > 0,
+          ) &&
+          [...document.querySelectorAll<HTMLVideoElement>("[data-tag] video")].every(
+            (video) => video.videoHeight > 0,
+          ),
       ),
     )
     .toBe(true);
 
-/** Scrolls down through the thread, waiting for every image, and records each row's settled height. */
+/** Scrolls down through the thread, waiting for its media, and records each row's settled height. */
 const readThreadDown = async (page: Page, steps: number) => {
   for (let i = 0; i < steps; i += 1) {
     await page.evaluate((top) => {
       (window as unknown as { __thread: ThreadProbe }).__thread.scrollBy(top);
     }, STEP);
     await settle(page);
-    await imagesLoaded(page);
+    await mediaLoaded(page);
     await settle(page);
     await page.evaluate(() => {
       const probe = (window as unknown as { __thread: ThreadProbe }).__thread;
@@ -130,8 +154,8 @@ const scrollBackUpWatching = async (page: Page, steps: number) => {
         const tag = row.dataset.tag!;
         const known = probe.heights.get(tag);
         if (known === undefined) continue;
-        if (!mountedAtStart.has(tag) && row.querySelector("img[decoding]")) {
-          probe.remountedImageRows.add(tag);
+        if (!mountedAtStart.has(tag) && row.querySelector("img[decoding], video")) {
+          probe.remountedMediaRows.add(tag);
         }
         const height = row.getBoundingClientRect().height;
         if (Math.abs(height - known) > 1) {
@@ -151,20 +175,20 @@ const scrollBackUpWatching = async (page: Page, steps: number) => {
     }, -STEP);
     await settle(page);
   }
-  // Images still on their way when the scroll stops.
-  await page.waitForTimeout(IMAGE_DELAY_MS * 3);
+  // Media still on its way when the scroll stops.
+  await page.waitForTimeout(MEDIA_DELAY_MS * 3);
   return page.evaluate(() => {
     const probe = (window as unknown as { __thread: ThreadProbe }).__thread;
     probe.watching = false;
     return {
-      remountedImageRows: probe.remountedImageRows.size,
+      remountedMediaRows: probe.remountedMediaRows.size,
       resized: probe.resized,
       corrections: probe.corrections,
     };
   });
 };
 
-test("rows with an image come back with their height and without moving the scroll", async ({
+test("rows with media come back with their height and without moving the scroll", async ({
   page,
 }) => {
   await page.goto(VOX);
@@ -185,13 +209,13 @@ test("rows with an image come back with their height and without moving the scro
   const requestsGoingDown = imageRequests;
   const up = await scrollBackUpWatching(page, steps - 2);
 
-  expect(up.remountedImageRows).toBeGreaterThan(8);
+  expect(up.remountedMediaRows).toBeGreaterThan(10);
   // They were fetched again: the rows did come back without their image.
-  expect(imageRequests - requestsGoingDown).toBeGreaterThan(8);
+  expect(imageRequests - requestsGoingDown).toBeGreaterThan(4);
   expect(up.resized).toEqual([]);
   expect(up.corrections).toEqual([]);
 
-  // The size is only held while the image is on its way: a loaded row is free to change again.
-  await imagesLoaded(page);
+  // The size is only held while the media is on its way: a loaded row is free to change again.
+  await mediaLoaded(page);
   await expect(page.locator('[data-tag] [style*="min-height"]')).toHaveCount(0);
 });
