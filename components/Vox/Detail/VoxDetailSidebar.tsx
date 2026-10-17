@@ -127,7 +127,7 @@ export const VoxDetailSidebar = ({
       />
 
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold leading-tight">{vox.title}</h1>
+        <h1 className="break-words text-2xl font-bold leading-tight">{vox.title}</h1>
         <RichGreentextLinkBlock
           text={vox.description}
           className="whitespace-pre-wrap break-words text-sm text-fg-secondary"
